@@ -1,45 +1,56 @@
-import React from "react";
-import Image from "next/image";
-import { Button } from "../ui/button";
+/**
+ * v0 by Vercel.
+ * @see https://v0.dev/t/BG2DN6hcHLO
+ * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
+ */
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
-const Navbar = () => {
+export default function Component() {
   return (
-    <div className="flex fixed top-0 left-0 w-full p-2 border-b border-gray-400 items-center justify-between bg-white">
-      <div className="basic-options flex justify-between gap-10 text-lg ">
-        <div className="cursor-pointer rounded-md p-3 hover:text-red-600 font-semibold ">
-          About
-        </div>
-        <div className="cursor-pointer rounded-md p-3 hover:text-red-600  font-semibold">
-          Terms & Conditions
-        </div>
-        <div className="cursor-pointer rounded-md p-3 hover:text-red-600  font-semibold">
+    <header className="flex h-20 w-full shrink-0 items-center px-4 md:px-6">
+      <Link href="#" className="mr-6 flex items-center" prefetch={false}>
+        <MountainIcon className="h-6 w-6" />
+        <span className="sr-only">VielX</span>
+      </Link>
+      <nav className="hidden lg:flex items-center gap-4 sm:gap-6">
+        <Link href="#" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+          About Us
+        </Link>
+        <Link href="#" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
           Pricing
-        </div>
+        </Link>
+        <Link href="#" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+          Features
+        </Link>
+        <Link href="#" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+          Contact
+        </Link>
+      </nav>
+      <div className="ml-auto flex items-center gap-2">
+        <Button variant="outline">Sign In</Button>
+        <Button>Sign Up</Button>
+        <Button className="bg-white text-black hover:bg-red-600 hover:text-white">Connect Wallet</Button>
       </div>
+    </header>
+  )
+}
 
-      <div className="logo-box flex items-center text-2xl">
-        <Image
-          className="hover:cursor-pointer"
-          src="/Vercel.png"
-          width={110}
-          height={110}
-          alt="main-logo goes here"
-        />
-      </div>
-
-      <div className="login flex items-center gap-4">
-        <Button className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-700  font-medium">
-          SIGN UP
-        </Button>
-        <Button className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-700 font-medium">
-          SIGN IN
-        </Button>
-        <Button className="text-black px-4 py-2 rounded-lg hover:text-white font-bold hover:bg-red-600 border-2 border-grey">
-          CONNECT WALLET
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-export default Navbar;
+function MountainIcon(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+    </svg>
+  )
+}
