@@ -11,7 +11,7 @@ export default function Component() {
   return (
     <nav className="fixed h-[10vh] top-0 left-0 right-0 z-50 px-6 py-2 transition-all duration-300 ease-in-out bg-transparent flex items-center">
       <div className="container flex items-center justify-between mx-auto">
-        <div className="flex items-center space-x-4">
+        <Link href="/" className="flex items-center space-x-4">
           <svg
             className="text-purple-600 dark:text-purple-400"
             width="24"
@@ -29,7 +29,7 @@ export default function Component() {
           <span className="text-2xl font-bold text-gray-800 dark:text-white">
             Veil<span className="text-purple-600 dark:text-purple-400">X</span>
           </span>
-        </div>
+        </Link>
         <div className="hidden md:flex items-center space-x-6 mr-auto ml-8">
           {["About Us", "How to Use", "Features"].map((item) => (
             <Link
