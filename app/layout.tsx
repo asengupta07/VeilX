@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/component/Navbar";
+import { ThemeProvider } from "next-themes";
+import ThemeToggle from "@/components/component/ThemeToggle";
 
 const inter = Inter({ subsets: ["latin"] });
+const darkMode = true;
 
 export const metadata: Metadata = {
   title: "VeilX",
@@ -16,10 +19,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${darkMode ? "dark" : ""}`}>
       <body className={inter.className}>
-        <Navbar />
-        {children}
+        <ThemeProvider attribute="class">
+          <Navbar />
+          {children}
+          <ThemeToggle />
+        </ThemeProvider>
       </body>
     </html>
   );
