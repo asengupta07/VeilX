@@ -18,7 +18,7 @@ const ThemeToggle = () => {
     <button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       className={cn(
-        "p-2 rounded focus:outline-none absolute right-4 bottom-4",
+        "p-2 rounded focus:outline-none absolute right-4 bottom-4 z-[100]",
         theme === "dark" ? "border border-white" : "border border-black"
       )}
     >

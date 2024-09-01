@@ -1,8 +1,11 @@
+"use client";
 import React from "react";
 import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-with-collision";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
-import { ArrowRightCircle } from "lucide-react";
+import { ArrowRightCircle, Router } from "lucide-react";
+import { useRouter } from "next/navigation";
 const page = () => {
+  const router = useRouter();
   return (
     <BackgroundBeamsWithCollision>
       <h2 className="text-2xl relative z-20 md:text-4xl lg:text-7xl font-bold text-center text-black dark:text-white font-sans tracking-tight">
@@ -22,6 +25,7 @@ const page = () => {
         containerClassName="rounded-full"
         as="button"
         className="dark:bg-black bg-white text-black dark:text-white flex items-center space-x-2"
+        onClick={() => router.push("/uploads")}
       >
         <span>Get Started</span>
         <ArrowRightCircle size={16} />
