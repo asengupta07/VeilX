@@ -14,6 +14,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^11.3.31",
     "lucide-react": "^0.436.0",
+    "mini-svg-data-uri": "^1.4.4",
     "next": "14.2.7",
     "next-themes": "^0.3.0",
     "react": "^18",

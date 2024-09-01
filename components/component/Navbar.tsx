@@ -24,29 +24,47 @@ function MountainIcon(props: SVGProps<SVGSVGElement>) {
 
 export default function Component() {
   return (
-    <header className="flex h-20 w-full shrink-0 items-center px-4 md:px-6 bg-gray-950 text-gray-100">
+    <header className="flex h-20 z-50 fixed w-full shrink-0 items-center px-4 md:px-6 bg-transparent">
       <Link href="#" className="mr-6 flex items-center" prefetch={false}>
         <MountainIcon className="h-6 w-6" />
         <span className="sr-only">VeilX</span>
       </Link>
       <nav className="hidden lg:flex items-center gap-4 sm:gap-6">
-        <Link href="#" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+        <Link
+          href="#"
+          className="text-sm font-medium hover:underline underline-offset-4"
+          prefetch={false}
+        >
           About Us
         </Link>
-        <Link href="#" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+        <Link
+          href="#"
+          className="text-sm font-medium hover:underline underline-offset-4"
+          prefetch={false}
+        >
           Pricing
         </Link>
-        <Link href="#" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+        <Link
+          href="#"
+          className="text-sm font-medium hover:underline underline-offset-4"
+          prefetch={false}
+        >
           Features
         </Link>
-        <Link href="#" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+        <Link
+          href="#"
+          className="text-sm font-medium hover:underline underline-offset-4"
+          prefetch={false}
+        >
           Contact
         </Link>
       </nav>
       <div className="ml-auto flex items-center gap-2">
         <Button variant="secondary">Sign In</Button>
         <Button>Sign Up</Button>
-        <Button className="bg-white text-black hover:bg-red-600 hover:text-white">Connect Wallet</Button>
+        <Button className="bg-white text-black hover:bg-red-600 hover:text-white">
+          Connect Wallet
+        </Button>
       </div>
     </header>
   );
