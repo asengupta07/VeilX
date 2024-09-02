@@ -44,7 +44,7 @@ export default function PurpleUploadPage() {
       <div className="absolute h-screen flex items-center justify-center">
         <TextHoverEffect text="Upload" />
       </div>
-      <Card className="w-full max-w-md bg-transparent z-20 shadow-xl border-purple-500 overflow-hidden">
+      <Card className="w-full max-w-md bg-transparent mt-6 z-20 shadow-xl border-purple-500 overflow-hidden">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center text-purple-800">
             Upload File
@@ -122,7 +122,7 @@ export default function PurpleUploadPage() {
               >
                 <Button
                   type="submit"
-                  className="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white"
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                 >
                   Upload
                 </Button>
