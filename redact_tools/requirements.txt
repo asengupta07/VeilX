@@ -1,0 +1,10 @@
+easyocr
+PyMuPDF
+numpy
+opencv_python
+opencv_python_headless
+Pillow
+pytesseract
+Requests
+torch
+ultralytics
