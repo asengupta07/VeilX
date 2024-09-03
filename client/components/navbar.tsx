@@ -28,7 +28,7 @@ export default function Component() {
           />
         </Link>
         <div className="hidden md:flex items-center space-x-6 mr-auto ml-8">
-          {["About Us", "How to Use", "Features"].map((item) => (
+          {["About Us", "How to Use", "Features", "Marketplace"].map((item) => (
             <Link
               key={item}
               href="#"
