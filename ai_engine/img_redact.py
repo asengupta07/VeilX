@@ -187,7 +187,7 @@ def redact_images(image, image_regions):
         
     return redacted
 
-def main(input_image, output_image):
+def redactImg(input_image, output_image):
     image = cv2.imread(input_image)
     if image is None:
         logging.error(f"Failed to load image: {input_image}")
@@ -211,7 +211,8 @@ def main(input_image, output_image):
 
     cv2.imwrite(output_image, final_redacted_image)
     logging.info(f"Redacted image saved as {output_image}")
+
 if __name__ == "__main__":
     input_image = "input.jpg"
     output_image = "output.jpg"
-    main(input_image, output_image)
+    redactImg(input_image, output_image)

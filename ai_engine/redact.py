@@ -60,6 +60,7 @@ def find_sensitive_data(text):
     response = requests.post('https://api.jabirproject.org/generate', json=data, headers=headers)
     if response.status_code == 200:
         entities_json = response.json().get("result", {}).get("content", "")
+        print(entities_json)
         try:
             entities = json.loads(entities_json)
         except json.JSONDecodeError:
@@ -137,7 +138,7 @@ def save_redacted_pdf(pdf_doc, output_path):
     pdf_doc.save(output_path, garbage=4, deflate=True, clean=True)
     pdf_doc.close()
 
-def main(input_pdf, output_pdf):
+def redact(input_pdf, output_pdf):
     text, pdf_doc = extract_text_from_pdf(input_pdf)
     sensitive_data = find_sensitive_data(text)
     redact_text_in_pdf(pdf_doc, sensitive_data)
@@ -148,4 +149,4 @@ def main(input_pdf, output_pdf):
 if __name__ == "__main__":
     input_pdf = "input5.pdf"
     output_pdf = "output5.pdf"
-    main(input_pdf, output_pdf)
+    redact(input_pdf, output_pdf)
