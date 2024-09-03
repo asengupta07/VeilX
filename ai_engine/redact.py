@@ -60,6 +60,7 @@ def find_sensitive_data(text):
     response = requests.post('https://api.jabirproject.org/generate', json=data, headers=headers)
     if response.status_code == 200:
         entities_json = response.json().get("result", {}).get("content", "")
+        print(entities_json)
         try:
             entities = json.loads(entities_json)
         except json.JSONDecodeError:

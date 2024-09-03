@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import axios from 'axios';
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Card,
@@ -20,23 +21,70 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { TextHoverEffect } from "@/components/ui/text-hover-effect";
-import { FileUpload } from "@/components/ui/file-upload"; // Import the FileUpload component
+import { FileUpload } from "@/components/ui/file-upload";
 
 export default function PurpleUploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState<string>("");
   const [redactionDegree, setRedactionDegree] = useState<number>(1);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (files: File[]) => {
     if (files.length > 0) {
       setFile(files[0]);
+      setDownloadUrl(null); // Reset download URL when a new file is selected
+      setError(null); // Clear any previous errors
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ file, fileType, redactionDegree });
-    // Handle file upload logic here
+    if (!file) {
+      setError("Please select a file to upload.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("fileType", fileType);
+    formData.append("redactionDegree", redactionDegree.toString());
+
+    try {
+      const response = await axios.post('http://127.0.0.1:5000/redaction', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        responseType: 'blob'
+      });
+
+      const contentType = response.headers['content-type'];
+      if (contentType && contentType.includes('application/pdf')) {
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        setDownloadUrl(url);
+      } else {
+        throw new Error('Received response is not a PDF file');
+      }
+    } catch (error) {
+      console.error("There was an error processing the file!", error);
+      setError("An error occurred while processing the file. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownload = () => {
+    if (downloadUrl && file) {
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `redacted_${file.name}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   return (
@@ -66,7 +114,6 @@ export default function PurpleUploadPage() {
                 transition={{ delay: 0.1 }}
                 className="space-y-2"
               >
-                {/* Replace the Input with the FileUpload component */}
                 <FileUpload onChange={handleFileChange} />
               </motion.div>
               <motion.div
@@ -123,10 +170,37 @@ export default function PurpleUploadPage() {
                 <Button
                   type="submit"
                   className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  disabled={isLoading}
                 >
-                  Upload
+                  {isLoading ? "Processing..." : "Upload"}
                 </Button>
               </motion.div>
+
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-red-500 text-sm text-center"
+                >
+                  {error}
+                </motion.div>
+              )}
+
+              {downloadUrl && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <Button
+                    onClick={handleDownload}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white mt-4"
+                  >
+                    Download Redacted File
+                  </Button>
+                </motion.div>
+              )}
             </motion.form>
           </AnimatePresence>
         </CardContent>

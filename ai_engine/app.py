@@ -27,6 +27,12 @@ def redaction():
     return send_file(out_path, as_attachment=True, download_name=f"redacted_{doc.filename}")
 
 
+@app.route("/test", methods=["GET"])
+def test():
+    return "Test successful"
+
+
+
 if __name__ == "__main__":
     if not os.path.exists("temp"):
         os.makedirs("temp")
