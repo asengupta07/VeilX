@@ -19,6 +19,7 @@
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "ethers": "^6.13.2",
     "framer-motion": "^11.3.31",
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
@@ -27,6 +28,7 @@
     "mongoose": "^8.6.0",
     "next": "14.2.7",
     "next-themes": "^0.3.0",
+    "pino-pretty": "^11.2.2",
     "react": "^18",
     "react-dom": "^18",
     "react-dropzone": "^14.2.3",
@@ -34,6 +36,7 @@
     "simplex-noise": "^4.0.3",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
+    "thirdweb": "^5.49.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

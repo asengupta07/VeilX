@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
+import { ConnectIt } from "@/app/contexts/StateContext";
 
 export default function Component() {
   const pathname = usePathname();
@@ -61,9 +62,7 @@ export default function Component() {
             </Button>
           )}
 
-          <Button className="text-white bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 hover:from-purple-600 hover:via-violet-600 hover:to-pink-600">
-            Connect Wallet
-          </Button>
+          <ConnectIt />
         </div>
       </div>
     </nav>
