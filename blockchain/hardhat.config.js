@@ -1,4 +1,5 @@
 require("@matterlabs/hardhat-zksync-solc");
+require("dotenv").config();
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -12,17 +13,10 @@ module.exports = {
     },
   },
   networks: {
-    zksync_testnet: {
-      url: "https://zksync2-testnet.zksync.dev",
-      ethNetwork: "goerli",
-      chainId: 280,
-      zksync: true,
-    },
-    zksync_mainnet: {
-      url: "https://zksync2-mainnet.zksync.io/",
-      ethNetwork: "mainnet",
-      chainId: 324,
-      zksync: true,
+    veilx: {
+      url: "https://cuddly-fishstick-64rr4qg5575h5r95-9650.app.github.dev/ext/bc/VeilX/rpc",
+      chainId: 99222,
+      accounts: [`0x${process.env.PRIVATE_KEY}`],
     },
   },
   paths: {

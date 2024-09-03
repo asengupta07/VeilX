@@ -25,8 +25,8 @@ contract VeilXEcosys {
         emit RewardDistributed(recipient, amount);
     }
 
-    function receiveFunds() external payable {
-        require(msg.value > 0, "Send some ETH to deposit");
+    function buyData() external payable {
+        require(msg.value > 0, "Send some VX to deposit");
         emit FundsReceived(msg.sender, msg.value);
     }
 
