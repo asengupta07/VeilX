@@ -5,7 +5,6 @@ import React, {
   ReactNode,
   useEffect,
   useState,
-  use,
 } from "react";
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { createWallet } from "thirdweb/wallets";
@@ -15,20 +14,10 @@ import {
   getContract,
   prepareContractCall,
   sendTransaction,
-  readContract,
   toWei,
   defineChain,
 } from "thirdweb";
-import { ethers, formatEther } from "ethers";
-const chain = defineChain({
-  id: 99222,
-  rpc: "https://solid-space-invention-xv99v7wpq6v36pq6-9650.app.github.dev/ext/bc/VeilX/rpc",
-  nativeCurrency: {
-    name: "VeilX",
-    symbol: "VX",
-    decimals: 18,
-  },
-});
+const chain = defineChain(43113);
 
 const wallets = [
   createWallet("io.metamask"),
@@ -59,8 +48,8 @@ interface StateContextType {
   address: string;
   contract: any;
   account: any;
-  buyData: (amount: number) => Promise<void>;
-  distributeFunds: (address: string, amount: number) => Promise<void>;
+  buyData: (amount: string) => Promise<void>;
+  distributeFunds: (address: string, amount: string) => Promise<void>;
 }
 const StateContext = createContext<StateContextType | undefined>(undefined);
 
@@ -80,13 +69,52 @@ export function StateContextProvider({ children }: { children: ReactNode }) {
         const contract = await getContract({
           client,
           chain: chain,
-          address: "0x52C84043CD9c865236f11d9Fc9F56aa003c1f922",
+          address: "0x91cD7Ce64D50cc4BcA801D159CfF3745249638aD",
         });
         setContract(contract);
       }
     }
     contractInit();
   }, [account]);
-
-  
+  async function buyData(amount: string) {
+    const transaction = await prepareContractCall({
+      contract,
+      method: "function buyData() payable",
+      params: [],
+      value: toWei(amount),
+    });
+    const tx = await sendTransaction({
+      transaction,
+      account,
+    });
+    console.log(tx);
+  }
+  async function distributeFunds(address: string, amount: string) {
+    const transaction = await prepareContractCall({
+      contract,
+      method: "function distributeFunds(address, uint256)",
+      params: [address, toWei(amount)],
+    });
+    const tx = await sendTransaction({
+      transaction,
+      account,
+    });
+    console.log(tx);
+  }
+  return (
+    <StateContext.Provider
+      value={{ address, contract, account, buyData, distributeFunds }}
+    >
+      {children}
+    </StateContext.Provider>
+  );
 }
+export const useStateContext = () => {
+  const context = useContext(StateContext);
+  if (context === undefined) {
+    throw new Error(
+      "useStateContext must be used within a StateContextProvider"
+    );
+  }
+  return context;
+};

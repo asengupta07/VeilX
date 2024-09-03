@@ -17,9 +17,9 @@ export default function Component() {
         <Link href="/" className="flex items-center space-x-4">
           <Image
             src={
-              useTheme().theme === "dark"
-                ? "/VeilX_Logo.png"
-                : "/VeilX_Dark.png"
+              useTheme().theme === "light"
+                ? "/VeilX_Dark.png"
+                : "/VeilX_Logo.png"
             }
             alt="Logo"
             width={100}
