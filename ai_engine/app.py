@@ -7,8 +7,8 @@ app = Flask(__name__)
 
 CORS(app)
 
-@app.route("/redact", methods=["POST"])
-def redact():
+@app.route("/redaction", methods=["POST"])
+def redaction():
     if "file" not in request.files:
         return "No file part", 400
     
