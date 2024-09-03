@@ -10,7 +10,7 @@ const darkMode = true;
 
 export const metadata: Metadata = {
   title: "VeilX",
-  description: "RE-DACT YOUR DATA and Earn Rewards",
+  description: "RE-DACT your data and Earn Rewards",
 };
 
 export default function RootLayout({
