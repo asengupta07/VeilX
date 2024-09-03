@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import axios from 'axios';
+import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Card,
@@ -53,24 +53,30 @@ export default function PurpleUploadPage() {
     formData.append("redactionDegree", redactionDegree.toString());
 
     try {
-      const response = await axios.post('http://127.0.0.1:5000/redaction', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
-        responseType: 'blob'
-      });
+      const response = await axios.post(
+        "http://127.0.0.1:5000/redaction",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          responseType: "blob",
+        }
+      );
 
-      const contentType = response.headers['content-type'];
-      if (contentType && contentType.includes('application/pdf')) {
-        const blob = new Blob([response.data], { type: 'application/pdf' });
+      const contentType = response.headers["content-type"];
+      if (contentType && contentType.includes("application/pdf")) {
+        const blob = new Blob([response.data], { type: "application/pdf" });
         const url = window.URL.createObjectURL(blob);
         setDownloadUrl(url);
       } else {
-        throw new Error('Received response is not a PDF file');
+        throw new Error("Received response is not a PDF file");
       }
     } catch (error) {
       console.error("There was an error processing the file!", error);
-      setError("An error occurred while processing the file. Please try again.");
+      setError(
+        "An error occurred while processing the file. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -78,7 +84,7 @@ export default function PurpleUploadPage() {
 
   const handleDownload = () => {
     if (downloadUrl && file) {
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
       link.download = `redacted_${file.name}`;
       document.body.appendChild(link);
