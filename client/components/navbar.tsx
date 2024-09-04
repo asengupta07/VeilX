@@ -12,7 +12,6 @@ import ThemeToggle from "./component/ThemeToggle";
 export default function Component() {
   const pathname = usePathname();
   const router = useRouter();
-
   const isFixedNav = ["/", "/login", "/uploads", "/preview"].includes(pathname);
 
   return (
@@ -39,7 +38,7 @@ export default function Component() {
           {["About Us", "How to Use", "Features", "Marketplace"].map((item) => (
             <Link
               key={item}
-              href="#"
+              href={`/${item.toLowerCase().replace(" ", "-")}`}
               className="relative text-gray-800 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-300"
             >
               {item}
@@ -66,7 +65,6 @@ export default function Component() {
               Login
             </Button>
           )}
-
           <ConnectIt />
         </div>
       </div>
