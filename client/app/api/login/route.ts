@@ -14,39 +14,38 @@ interface UserRequestBody {
   password: string;
 }
 
-//Identifier can be either email or username
-export default async (req : NextRequest) => {
-  if (req.method === 'POST') {
-    const { identifier, password }: UserRequestBody = await req.json();
+async function posthandler (req : NextRequest) {
+  const { identifier, password }: UserRequestBody = await req.json();
 
-    if (!identifier || !password) {
-      return NextResponse.json({ message: 'Please fill all fields' }, { status: 400 });
-    }
-
-    try {
-      await connectToDatabase();
-
-      const User = mongoose.model('User', UserSchema);
-      const user = await User.findOne({ $or: [{ email: identifier }, { username: identifier }] });
-
-      if (!user) {
-        return NextResponse.json({ message: 'User not found' }, { status: 404 });
-      }
-
-      const isMatch = await compare(password, user.password);
-
-      if (!isMatch) {
-        return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
-      }
-
-      const token = jwt.sign({ userId: user._id }, secretKey);
-
-      return NextResponse.json({ token, userId: user._id }, { status: 200 });
-    } catch (error) {
-      console.error(error);
-      return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
-    }
+  if (!identifier || !password) {
+    return NextResponse.json({ message: 'Please fill all fields' }, { status: 400 });
   }
-  
-  return NextResponse.json({ message: 'Method Not Allowed' }, { status: 405 });
+
+  try {
+    await connectToDatabase();
+
+    const User = mongoose.model('User', UserSchema);
+    const user = await User.findOne({ $or: [{ email: identifier }, { username: identifier }] });
+
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+
+    const isMatch = await compare(password, user.password);
+
+    if (!isMatch) {
+      return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
+    }
+
+    const token = jwt.sign({ userId: user._id }, secretKey);
+
+    return NextResponse.json({ token, userId: user._id }, { status: 200 });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+  }
 };
+
+export {
+  posthandler as POST
+}
