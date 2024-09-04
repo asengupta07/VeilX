@@ -50,7 +50,7 @@ interface StateContextType {
   contract: any;
   account: any;
   buyData: (amount: string) => Promise<void>;
-  distributeFunds: (address: string, amount: string) => Promise<void>;
+  distributeReward: (address: string, amount: string) => Promise<void>;
 }
 const StateContext = createContext<StateContextType | undefined>(undefined);
 
@@ -91,7 +91,7 @@ export function StateContextProvider({ children }: { children: ReactNode }) {
     });
     console.log(tx);
   }
-  async function distributeFunds(address: string, amount: string) {
+  async function distributeReward(address: string, amount: string) {
     const transaction = await prepareContractCall({
       contract,
       method: "function distributeFunds(address, uint256)",
@@ -105,7 +105,7 @@ export function StateContextProvider({ children }: { children: ReactNode }) {
   }
   return (
     <StateContext.Provider
-      value={{ address, contract, account, buyData, distributeFunds }}
+      value={{ address, contract, account, buyData, distributeReward }}
     >
       {children}
     </StateContext.Provider>
