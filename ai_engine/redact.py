@@ -3,11 +3,16 @@ import json
 import requests
 import re
 import logging
+import google.generativeai as genai
 
 API_KEY = "adc4ae97-fa05-4faf-b1b4-a72805d035c4"
+GOOGLE_API_KEY = "AIzaSyDdwSHEaQfEkeIXd8h2T4uIPaG4M6kZijk"
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Configure Gemini
+genai.configure(api_key=GOOGLE_API_KEY)
 
 def extract_text_from_pdf(pdf_path):
     doc = fitz.open(pdf_path)
@@ -16,6 +21,33 @@ def extract_text_from_pdf(pdf_path):
         page = doc[page_num]
         text += page.get_text()
     return text, doc
+
+def get_gemini_response(prompt):
+    try:
+        model = genai.GenerativeModel('gemini-pro')
+        safety_settings = [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_NONE",
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_NONE",
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_NONE",
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_NONE",
+            },
+        ]
+        response = model.generate_content(prompt, safety_settings=safety_settings)
+        return response.text
+    except Exception as e:
+        logging.error(f"Error in Gemini API call: {str(e)}")
+        return None
 
 def find_sensitive_data(text):
     prompt = (
@@ -46,7 +78,7 @@ def find_sensitive_data(text):
         "    // Add ALL identified items\n"
         "]\n\n"
         "Err on the side of caution - if in doubt, include it. However, do not flag single letters or common words unless they are part of a larger sensitive item. "
-        "Provide your comprehensive analysis based on these instructions.\n\n"
+        "Provide your comprehensive analysis based on these instructions. Do not include codeblocks, only the required JSON data in String format.\n\n"
         f"Text to analyze:\n{text}"
     )
     
@@ -64,11 +96,25 @@ def find_sensitive_data(text):
         try:
             entities = json.loads(entities_json)
         except json.JSONDecodeError:
-            logging.error("Error: Unable to parse JSON response")
-            return []
+            logging.error("Error: Unable to parse JSON response from Jabir API")
+            entities = None
     else:
-        logging.error(f"Error: {response.status_code} - {response.text}")
-        return []
+        logging.error(f"Error in Jabir API call: {response.status_code} - {response.text}")
+        entities = None
+
+    if entities is None:
+        logging.info("Falling back to Gemini Pro API")
+        gemini_response = get_gemini_response(prompt)
+        print(gemini_response)
+        if gemini_response:
+            try:
+                entities = json.loads(gemini_response)
+            except json.JSONDecodeError:
+                logging.error("Error: Unable to parse JSON response from Gemini API")
+                return []
+        else:
+            logging.error("Both Jabir and Gemini API calls failed")
+            return []
 
     sensitive_data = []
     for entity in entities:

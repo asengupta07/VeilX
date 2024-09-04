@@ -6,7 +6,7 @@ import { ThemeProvider } from "next-themes";
 import ThemeToggle from "@/components/component/ThemeToggle";
 import { ThirdwebProvider } from "thirdweb/react";
 import { StateContextProvider } from "@/app/contexts/StateContext";
-import { Suspense } from "react";
+import { AuthProvider } from "./contexts/authContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,16 +23,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Suspense fallback={null}>
-          <ThirdwebProvider>
-            <StateContextProvider>
-              <ThemeProvider attribute="class">
+        <ThirdwebProvider>
+          <StateContextProvider>
+            <ThemeProvider attribute="class">
+              <AuthProvider>
                 <Navbar />
                 {children}
-              </ThemeProvider>
-            </StateContextProvider>
-          </ThirdwebProvider>
-        </Suspense>
+              </AuthProvider>
+            </ThemeProvider>
+          </StateContextProvider>
+        </ThirdwebProvider>
       </body>
     </html>
   );
