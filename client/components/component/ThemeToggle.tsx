@@ -19,7 +19,7 @@ const ThemeToggle = () => {
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       className={cn(
         "p-2 rounded focus:outline-none z-[100]",
-        theme === "dark" ? "border border-white" : "border border-black"
+        theme === "dark" ? "border border-zinc-800" : "border border-zinc-200"
       )}
     >
       {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
