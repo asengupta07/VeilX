@@ -69,16 +69,8 @@ export const BackgroundBeamsWithCollision = ({
   return (
     <div
       ref={parentRef}
-      style={{
-        background:
-          "linear-gradient( rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5) ), url('/VeilXlogo.jpg')",
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPositionX: "80%",
-        backgroundPositionY: "center",
-      }}
       className={cn(
-        "h-screen relative flex items-center flex-col w-full justify-center overflow-hidden",
+        "h-screen bg-gradient-to-b from-white to-neutral-100 dark:from-neutral-950 dark:to-neutral-800 relative flex items-center flex-col w-full justify-center overflow-hidden",
         // h-screen if you want bigger
         className
       )}
