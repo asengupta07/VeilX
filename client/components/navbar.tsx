@@ -12,7 +12,6 @@ import ThemeToggle from "./component/ThemeToggle";
 export default function Component() {
   const pathname = usePathname();
   const router = useRouter();
-
   const isFixedNav = ["/", "/login", "/uploads", "/preview"].includes(pathname);
 
   return (
@@ -38,11 +37,11 @@ export default function Component() {
         <div className="hidden md:flex items-center space-x-6 mr-auto ml-8">
           {["About Us", "How to Use", "Features", "Marketplace"].map((item) => (
             <Link
-              key={name}
-              href={route}
+              key={item}
+              href={`/${item.toLowerCase().replace(" ", "-")}`}
               className="relative text-gray-800 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-300"
             >
-              {name}
+              {item}
               <span className="absolute left-0 bottom-0 w-full h-0.5 bg-purple-600 dark:bg-purple-400 transform scale-x-0 transition-transform duration-300 origin-left hover:scale-x-100" />
             </Link>
           ))}
@@ -66,7 +65,6 @@ export default function Component() {
               Login
             </Button>
           )}
-
           <ConnectIt />
         </div>
       </div>
