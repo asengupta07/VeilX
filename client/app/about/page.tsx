@@ -1,9 +1,43 @@
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 export default function About() {
+  const values = [
+    {
+      title: "Innovation",
+      description:
+        "We are constantly exploring new ideas and technologies to create groundbreaking solutions that set us apart from the competition.",
+      Icon: LightbulbIcon,
+    },
+    {
+      title: "Collaboration",
+      description:
+        "We believe in the power of teamwork and foster a culture of open communication and mutual respect to deliver the best results for our clients.",
+      Icon: UsersIcon,
+    },
+    {
+      title: "Integrity",
+      description:
+        "We are committed to upholding the highest ethical standards and building long-term relationships based on trust and transparency.",
+      Icon: ShieldIcon,
+    },
+    {
+      title: "Excellence",
+      description:
+        "We strive for excellence in everything we do, constantly pushing ourselves to deliver exceptional results and exceed our clients' expectations.",
+      Icon: StarIcon,
+    },
+  ];
+
   return (
     <div className="bg-[#000000] text-white min-h-[100dvh] flex flex-col dark:bg-[#161515] dark:text-white">
       <section className="relative flex flex-col items-center justify-center h-[60dvh] bg-gradient-to-b from-[#b565a7] to-[#e15d44] px-4 sm:px-6 md:px-8 dark:bg-gradient-to-b dark:from-[#000000] dark:to-[#110200]">
         <div
-          className="absolute inset-0 bg-cover bg-center opacity- 60"
+          className="absolute inset-0 bg-cover bg-center opacity-60"
           style={{
             backgroundImage:
               "url('https://github.githubassets.com/assets/footer-galaxy-096a057faaf4.jpg')",
@@ -19,6 +53,7 @@ export default function About() {
           </p>
         </div>
       </section>
+
       <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-8 bg-black">
         <div className="max-w-3xl mx-auto space-y-8">
           <div>
@@ -37,67 +72,31 @@ export default function About() {
               data sharing.
             </p>
           </div>
+
           <div className="mt-8">
             <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-wider text-purple-600 dark:text-purple-400 neon-glow">
               Our Values
             </h2>
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="bg-[#1b1b1b] dark:bg-[#222222] p-8 rounded-lg shadow-lg flex items-start gap-7">
-                <LightbulbIcon className="w-20 h-20 text-[#fdfdfd] neon-glow" />
-                <div>
-                  <h3 className="text-3xl font-bold text-[#eff307] neon-glow">
-                    Innovation
-                  </h3>
-                  <p className="mt-2 text-xl">
-                    We are constantly exploring new ideas and technologies to
-                    create groundbreaking solutions that set us apart from the
-                    competition.
-                  </p>
+              {values.map(({ title, description, Icon }, index) => (
+                <div
+                  key={index}
+                  className="bg-[#1b1b1b] dark:bg-[#222222] p-8 rounded-lg shadow-lg flex items-start gap-7"
+                >
+                  <Icon className="w-20 h-20 text-[#fdfdfd] neon-glow" />
+                  <div>
+                    <h3 className="text-3xl font-bold text-[#eff307] neon-glow">
+                      {title}
+                    </h3>
+                    <p className="mt-2 text-xl">{description}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="bg-[#1b1b1b] dark:bg-[#222222] p-8 rounded-lg shadow-lg flex items-start gap-7">
-                <UsersIcon className="w-20 h-20 text-[#ffffff] neon-glow" />
-                <div>
-                  <h3 className="text-3xl font-bold text-[#eff307]  neon-glow">
-                    Collaboration
-                  </h3>
-                  <p className="mt-2 text-xl">
-                    We believe in the power of teamwork and foster a culture of
-                    open communication and mutual respect to deliver the best
-                    results for our clients.
-                  </p>
-                </div>
-              </div>
-              <div className="bg-[#1b1b1b] dark:bg-[#222222] p-8 rounded-lg shadow-lg flex items-start gap-7">
-                <ShieldIcon className="w-20 h-20 text-[#ffffff] neon-glow" />
-                <div>
-                  <h3 className="text-3xl font-bold text-[#eff307]  neon-glow">
-                    Integrity
-                  </h3>
-                  <p className="mt-2 text-xl">
-                    We are committed to upholding the highest ethical standards
-                    and building long-term relationships based on trust and
-                    transparency.
-                  </p>
-                </div>
-              </div>
-              <div className="bg-[#1b1b1b] dark:bg-[#222222] p-8 rounded-lg shadow-lg flex items-start gap-7">
-                <StarIcon className="w-20 h-20 text-[#faf9fa] neon-glow" />
-                <div>
-                  <h3 className="text-3xl font-bold text-[#eff307]  neon-glow">
-                    Excellence
-                  </h3>
-                  <p className="mt-2 text-xl">
-                    We strive for excellence in everything we do, constantly
-                    pushing ourselves to deliver exceptional results and exceed
-                    our clients' expectations.
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
+
           <div>
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-wide  text-purple-600 dark:text-purple-400 ">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-wide text-purple-600 dark:text-purple-400">
               Our Promise
             </h2>
             <p className="mt-10 text-xl sm:text-2xl md:text-3xl">

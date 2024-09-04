@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Minus, Plus, ShoppingCart } from "lucide-react";
+import { Minus, Plus, ShoppingCart, Sun, Moon } from "lucide-react";
 import { useStateContext } from "../contexts/StateContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,9 +45,24 @@ const products = [
 ];
 
 export default function Component() {
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    const isDarkMode = localStorage.getItem("darkMode") === "true";
+    setDarkMode(isDarkMode);
+    document.documentElement.classList.toggle("dark", isDarkMode);
+  }, []);
+
+  const toggleDarkMode = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    localStorage.setItem("darkMode", newDarkMode.toString());
+    document.documentElement.classList.toggle("dark", newDarkMode);
+  };
+
   return (
-    <div className="min-h-[90vh] bg-black p-8 transition-colors duration-300">
-      <h1 className="text-5xl font-bold text-center mb-12 text-white">
+    <div className="min-h-[90vh] bg-white dark:bg-black p-8 transition-colors duration-300">
+      <h1 className="text-5xl font-bold text-center mb-12 text-black dark:text-white">
         <span className="bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">
           VeilX{" "}
         </span>
@@ -74,7 +89,7 @@ function ProductCard({ product }: { product: any }) {
       className="relative"
     >
       <div className="absolute inset-0 bg-purple-500 rounded-lg opacity-20 blur-md"></div>
-      <Card className="relative overflow-hidden bg-black border border-purple-500 shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <Card className="relative overflow-hidden bg-white dark:bg-black border border-purple-500 shadow-lg hover:shadow-xl transition-shadow duration-300">
         <CardHeader className="p-0">
           <div className="overflow-hidden">
             <motion.img
@@ -87,20 +102,20 @@ function ProductCard({ product }: { product: any }) {
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          <CardTitle className="text-xl font-semibold text-purple-400 mb-2">
+          <CardTitle className="text-xl font-semibold text-purple-600 dark:text-purple-400 mb-2">
             {product.name}
           </CardTitle>
-          <p className="text-purple-300 font-bold">
+          <p className="text-purple-500 dark:text-purple-300 font-bold">
             {product.price.toFixed(2)} AVAX/100 units
           </p>
         </CardContent>
-        <CardFooter className="p-4 bg-purple-900 bg-opacity-30">
+        <CardFooter className="p-4 bg-purple-100 dark:bg-purple-900 bg-opacity-30 dark:bg-opacity-30">
           <div className="flex items-center justify-between gap-2 w-full">
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-full border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-black"
+                className="h-8 w-8 rounded-full border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white dark:hover:text-black"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
               >
                 <Minus className="h-4 w-4" />
@@ -112,12 +127,12 @@ function ProductCard({ product }: { product: any }) {
                 onChange={(e) =>
                   setQuantity(Math.max(1, parseInt(e.target.value) || 1))
                 }
-                className="w-16 text-center bg-transparent border-purple-500 text-purple-300"
+                className="w-16 text-center bg-transparent border-purple-500 text-purple-500 dark:text-purple-300"
               />
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-full border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-black"
+                className="h-8 w-8 rounded-full border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white dark:hover:text-black"
                 onClick={() => setQuantity(quantity + 1)}
               >
                 <Plus className="h-4 w-4" />
