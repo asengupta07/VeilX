@@ -7,12 +7,20 @@ import { usePathname } from "next/navigation";
 import { ConnectIt } from "@/app/contexts/StateContext";
 import Image from "next/image";
 import { useTheme } from "next-themes";
+import ThemeToggle from "./component/ThemeToggle";
 
 export default function Component() {
   const pathname = usePathname();
   const router = useRouter();
+
+  const isFixedNav = ["/", "/login", "/uploads", "/preview"].includes(pathname);
+
   return (
-    <nav className="fixed h-[10vh] top-0 left-0 right-0 z-50 px-6 py-2 transition-all duration-300 ease-in-out bg-transparent flex items-center">
+    <nav
+      className={`${
+        isFixedNav ? "fixed" : "relative"
+      } h-[10vh] top-0 left-0 right-0 z-50 px-6 py-2 transition-all duration-300 ease-in-out bg-transparent flex items-center`}
+    >
       <div className="container flex items-center justify-between mx-auto">
         <Link href="/" className="flex items-center space-x-4">
           <Image
@@ -40,6 +48,7 @@ export default function Component() {
           ))}
         </div>
         <div className="flex items-center space-x-4">
+          <ThemeToggle />
           {pathname === "/login" ? (
             <Button
               variant="ghost"

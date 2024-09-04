@@ -27,11 +27,12 @@ const wallets = [
   createWallet("io.zerion.wallet"),
 ];
 export function ConnectIt() {
+  const { theme } = useTheme();
   return (
     <ConnectButton
       client={client}
       wallets={wallets}
-      theme={`${useTheme().theme === "dark" ? "dark" : "light"}`}
+      theme={`${theme === "dark" ? "dark" : "light"}`}
       connectModal={{
         size: "wide",
         title: "Connect to VeilX",
@@ -54,15 +55,16 @@ interface StateContextType {
 const StateContext = createContext<StateContextType | undefined>(undefined);
 
 export function StateContextProvider({ children }: { children: ReactNode }) {
+  const activeAccount = useActiveAccount();
   const [address, setAddress] = useState<string>("");
   const [contract, setContract] = useState<any>(null);
   const [account, setAccount] = useState<any>(null);
   useEffect(() => {
-    if (useActiveAccount()) {
-      setAccount(useActiveAccount());
-      setAddress(account.address);
+    if (activeAccount) {
+      setAccount(activeAccount);
+      setAddress(activeAccount.address);
     }
-  }, [useActiveAccount()]);
+  }, [activeAccount]);
   useEffect(() => {
     async function contractInit() {
       if (account) {

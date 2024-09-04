@@ -1,61 +1,85 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { TextHoverEffect } from "@/components/ui/text-hover-effect"
-import { useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { TextHoverEffect } from "@/components/ui/text-hover-effect";
+import { useSearchParams } from "next/navigation";
+import { useStateContext } from "../contexts/StateContext";
 
 export default function DocumentPreviewPage() {
-  const [originalFileUrl, setOriginalFileUrl] = useState<string | null>(null)
-  const [redactedFileUrl, setRedactedFileUrl] = useState<string | null>(null)
-  const [consentGiven, setConsentGiven] = useState(false)
-  const searchParams = useSearchParams()
+  const { distributeFunds, address } = useStateContext();
+  const [originalFileUrl, setOriginalFileUrl] = useState<string | null>(null);
+  const [redactedFileUrl, setRedactedFileUrl] = useState<string | null>(null);
+  const [consentGiven, setConsentGiven] = useState(false);
+  const [randomAmount, setRandomAmount] = useState<string>("");
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    const originalUrl = searchParams.get("original")
-    const redactedUrl = searchParams.get("redacted")
-    if (originalUrl) setOriginalFileUrl(decodeURIComponent(originalUrl))
-    if (redactedUrl) setRedactedFileUrl(decodeURIComponent(redactedUrl))
-  }, [searchParams])
+    const originalUrl = searchParams.get("original");
+    const redactedUrl = searchParams.get("redacted");
+    if (originalUrl) setOriginalFileUrl(decodeURIComponent(originalUrl));
+    if (redactedUrl) setRedactedFileUrl(decodeURIComponent(redactedUrl));
+  }, [searchParams]);
 
   const handleStoreOnBlockchain = () => {
     // Implement blockchain storage logic here
-    console.log("Storing on blockchain...")
-  }
+    console.log("Storing on blockchain...");
+  };
 
   const handleDownloadRedacted = () => {
     if (redactedFileUrl) {
-      const link = document.createElement("a")
-      link.href = redactedFileUrl
-      link.download = "redacted_document"
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      const link = document.createElement("a");
+      link.href = redactedFileUrl;
+      link.download = "redacted_document";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
-  }
+  };
 
   const handleStoreInDatabase = () => {
+    const rand = (Math.random() * 0.09 + 0.01).toFixed(2); // Random amount between 0.01 and 0.1
+    setRandomAmount(rand);
     if (consentGiven) {
-      // Implement database storage logic here
-      console.log("Storing in secure database...")
+      console.log("Storing in secure database...");
+      distributeFunds(address, rand);
     } else {
-      alert("Please give consent before storing in the database.")
+      alert("Please give consent before storing in the database.");
     }
-  }
+  };
 
   const renderPreview = (url: string | null, label: string) => {
-    if (!url) return <p className="text-gray-500">{label} preview not available</p>
+    if (!url)
+      return <p className="text-gray-500">{label} preview not available</p>;
 
     if (url.includes("application/pdf")) {
-      return <iframe src={url} title={`${label} Preview`} className="w-full h-full" />
+      return (
+        <iframe
+          src={url}
+          title={`${label} Preview`}
+          className="w-full h-full"
+        />
+      );
     } else {
-      return <iframe src={url} title={`${label} Document`} className="w-full h-full object-contain" />
+      return (
+        <iframe
+          src={url}
+          title={`${label} Document`}
+          className="w-full h-full object-contain"
+        />
+      );
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex flex-col pt-16">
@@ -65,7 +89,9 @@ export default function DocumentPreviewPage() {
         </div>
         <Card className="w-full max-w-6xl bg-transparent z-20 shadow-xl border-purple-500 overflow-hidden">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center text-purple-800">Document Preview</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center text-purple-800">
+              Document Preview
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-8">
@@ -75,7 +101,9 @@ export default function DocumentPreviewPage() {
                 transition={{ delay: 0.1 }}
                 className="space-y-4"
               >
-                <Label className="text-lg font-semibold text-purple-700">Original Document</Label>
+                <Label className="text-lg font-semibold text-purple-700">
+                  Original Document
+                </Label>
                 <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
                   {renderPreview(originalFileUrl, "Original")}
                 </div>
@@ -92,12 +120,17 @@ export default function DocumentPreviewPage() {
                 transition={{ delay: 0.2 }}
                 className="space-y-4"
               >
-                <Label className="text-lg font-semibold text-purple-700">Redacted Document</Label>
+                <Label className="text-lg font-semibold text-purple-700">
+                  Redacted Document
+                </Label>
                 <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
                   {renderPreview(redactedFileUrl, "Redacted")}
                 </div>
                 <div className="space-y-2">
-                  <Button onClick={handleDownloadRedacted} className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                  <Button
+                    onClick={handleDownloadRedacted}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  >
                     Download Redacted File
                   </Button>
                   <Button
@@ -119,7 +152,9 @@ export default function DocumentPreviewPage() {
               <Checkbox
                 id="consent"
                 checked={consentGiven}
-                onCheckedChange={(checked) => setConsentGiven(checked as boolean)}
+                onCheckedChange={({ checked }: { checked: any }) =>
+                  setConsentGiven(checked as boolean)
+                }
               />
               <label
                 htmlFor="consent"
@@ -128,12 +163,29 @@ export default function DocumentPreviewPage() {
                 I consent to storing this document in the secure database
               </label>
             </motion.div>
+            {consentGiven && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="mt-4"
+              >
+                <Button
+                  onClick={() => distributeFunds(address, randomAmount)}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                >
+                  Distribute Funds ({randomAmount} ETH)
+                </Button>
+              </motion.div>
+            )}
           </CardContent>
           <CardFooter>
-            <p className="text-sm text-purple-600 text-center w-full">Secure document redaction powered by VeilX</p>
+            <p className="text-sm text-purple-600 text-center w-full">
+              Secure document redaction powered by VeilX
+            </p>
           </CardFooter>
         </Card>
       </div>
     </div>
-  )
+  );
 }
