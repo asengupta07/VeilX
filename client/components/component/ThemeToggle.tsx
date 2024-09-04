@@ -18,11 +18,11 @@ const ThemeToggle = () => {
     <button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       className={cn(
-        "p-2 rounded focus:outline-none absolute right-4 bottom-4 z-[100]",
+        "p-2 rounded focus:outline-none z-[100]",
         theme === "dark" ? "border border-white" : "border border-black"
       )}
     >
-      {theme === "dark" ? <Sun size={24} /> : <Moon size={24} />}
+      {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
     </button>
   );
 };

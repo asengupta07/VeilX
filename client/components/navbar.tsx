@@ -5,42 +5,38 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { ConnectIt } from "@/app/contexts/StateContext";
+import Image from "next/image";
+import { useTheme } from "next-themes";
+import ThemeToggle from "./component/ThemeToggle";
 
 export default function Component() {
   const pathname = usePathname();
   const router = useRouter();
-  
-  // Mapping items to their routes
-  const navItems = [
-    { name: "About Us", route: "/about" },
-    { name: "How to Use", route: "/how-to-use" },
-    { name: "Features", route: "/features" },
-  ];
-  
+
+  const isFixedNav = ["/", "/login", "/uploads", "/preview"].includes(pathname);
+
   return (
-    <nav className="fixed h-[10vh] top-0 left-0 right-0 z-50 px-6 py-2 transition-all duration-300 ease-in-out bg-transparent flex items-center">
+    <nav
+      className={`${
+        isFixedNav ? "fixed" : "relative"
+      } h-[10vh] top-0 left-0 right-0 z-50 px-6 py-2 transition-all duration-300 ease-in-out bg-transparent flex items-center`}
+    >
       <div className="container flex items-center justify-between mx-auto">
         <Link href="/" className="flex items-center space-x-4">
-          <svg
-            className="text-purple-600 dark:text-purple-400"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
-          <span className="text-2xl font-bold text-gray-800 dark:text-white">
-            Veil<span className="text-purple-600 dark:text-purple-400">X</span>
-          </span>
+          <Image
+            src={
+              useTheme().theme === "light"
+                ? "/VeilX_Dark.png"
+                : "/VeilX_Logo.png"
+            }
+            alt="Logo"
+            width={100}
+            height={100}
+            className="aspect-video"
+          />
         </Link>
         <div className="hidden md:flex items-center space-x-6 mr-auto ml-8">
-          {navItems.map(({ name, route }) => (
+          {["About Us", "How to Use", "Features", "Marketplace"].map((item) => (
             <Link
               key={name}
               href={route}
@@ -52,6 +48,7 @@ export default function Component() {
           ))}
         </div>
         <div className="flex items-center space-x-4">
+          <ThemeToggle />
           {pathname === "/login" ? (
             <Button
               variant="ghost"

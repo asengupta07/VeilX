@@ -5,6 +5,7 @@ import Navbar from "@/components/navbar";
 import { ThemeProvider } from "next-themes";
 import ThemeToggle from "@/components/component/ThemeToggle";
 import { ThirdwebProvider } from "thirdweb/react";
+import { StateContextProvider } from "@/app/contexts/StateContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,11 +23,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <ThirdwebProvider>
-          <ThemeProvider attribute="class">
-            <Navbar />
-            {children}
-            <ThemeToggle />
-          </ThemeProvider>
+          <StateContextProvider>
+            <ThemeProvider attribute="class">
+              <Navbar />
+              {children}
+            </ThemeProvider>
+          </StateContextProvider>
         </ThirdwebProvider>
       </body>
     </html>

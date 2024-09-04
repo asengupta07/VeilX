@@ -4,7 +4,7 @@ import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-w
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 import { ArrowRightCircle, Router } from "lucide-react";
 import { useRouter } from "next/navigation";
-const page = () => {
+const Home = () => {
   const router = useRouter();
   return (
     <BackgroundBeamsWithCollision>
@@ -34,4 +34,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Home;

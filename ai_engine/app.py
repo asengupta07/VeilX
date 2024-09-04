@@ -78,4 +78,6 @@ def test():
 if not os.path.exists("temp"):
     os.makedirs("temp")
 clear_temp_folder()
-app.run()
+
+if __name__ == "__main__":
+    app.run()

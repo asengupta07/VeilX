@@ -22,20 +22,20 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 import { FileUpload } from "@/components/ui/file-upload";
+import { useRouter } from "next/navigation";
 
 export default function PurpleUploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState<string>("");
   const [redactionDegree, setRedactionDegree] = useState<number>(1);
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleFileChange = (files: File[]) => {
     if (files.length > 0) {
       setFile(files[0]);
-      setDownloadUrl(null); // Reset download URL when a new file is selected
-      setError(null); // Clear any previous errors
+      setError(null);
     }
   };
 
@@ -51,10 +51,11 @@ export default function PurpleUploadPage() {
     formData.append("file", file);
     formData.append("fileType", fileType);
     formData.append("redactionDegree", redactionDegree.toString());
+    const slug = fileType === "pdf" ? "redaction" : "redactimg";
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:5000/redaction",
+        `http://127.0.0.1:5000/${slug}`,
         formData,
         {
           headers: {
@@ -65,12 +66,16 @@ export default function PurpleUploadPage() {
       );
 
       const contentType = response.headers["content-type"];
-      if (contentType && contentType.includes("application/pdf")) {
-        const blob = new Blob([response.data], { type: "application/pdf" });
-        const url = window.URL.createObjectURL(blob);
-        setDownloadUrl(url);
+      if (contentType && (contentType.includes("application/pdf") || contentType.startsWith("image/"))) {
+        const originalBlob = new Blob([file], { type: file.type });
+        const redactedBlob = new Blob([response.data], { type: contentType });
+        const originalUrl = URL.createObjectURL(originalBlob);
+        const redactedUrl = URL.createObjectURL(redactedBlob);
+
+        // Redirect to the preview page with the file URLs
+        router.push(`/preview?original=${encodeURIComponent(originalUrl)}&redacted=${encodeURIComponent(redactedUrl)}`);
       } else {
-        throw new Error("Received response is not a PDF file");
+        throw new Error(`Received response is not a PDF or image file. Content type: ${contentType}`);
       }
     } catch (error) {
       console.error("There was an error processing the file!", error);
@@ -79,17 +84,6 @@ export default function PurpleUploadPage() {
       );
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleDownload = () => {
-    if (downloadUrl && file) {
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = `redacted_${file.name}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
     }
   };
 
@@ -140,9 +134,7 @@ export default function PurpleUploadPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="pdf">PDF</SelectItem>
-                    <SelectItem value="doc">DOC</SelectItem>
-                    <SelectItem value="txt">TXT</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="img">IMAGE</SelectItem>
                   </SelectContent>
                 </Select>
               </motion.div>
@@ -178,7 +170,7 @@ export default function PurpleUploadPage() {
                   className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Processing..." : "Upload"}
+                  {isLoading ? "Processing..." : "Upload and Preview"}
                 </Button>
               </motion.div>
 
@@ -190,21 +182,6 @@ export default function PurpleUploadPage() {
                   className="text-red-500 text-sm text-center"
                 >
                   {error}
-                </motion.div>
-              )}
-
-              {downloadUrl && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  <Button
-                    onClick={handleDownload}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white mt-4"
-                  >
-                    Download Redacted File
-                  </Button>
                 </motion.div>
               )}
             </motion.form>

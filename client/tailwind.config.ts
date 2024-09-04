@@ -19,6 +19,7 @@ const config = {
   prefix: "",
   theme: {
   	extend: {
+
   		colors: {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
@@ -67,6 +68,14 @@ const config = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		keyframes: {
+			meteor: {
+				"0%": { transform: "rotate(215deg) translateX(0)", opacity: "1" },
+				"70%": { opacity: "1" },
+				"100%": {
+				  transform: "rotate(215deg) translateX(-500px)",
+				  opacity: "0",
+				},
+			  },
   			'accordion-down': {
   				from: {
   					height: '0'
@@ -86,7 +95,9 @@ const config = {
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+			"meteor-effect": "meteor 5s linear infinite",
+
   		}
   	}
   },

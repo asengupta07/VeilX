@@ -14,11 +14,10 @@ import {
   getContract,
   prepareContractCall,
   sendTransaction,
-  readContract,
   toWei,
   defineChain,
 } from "thirdweb";
-import { ethers, formatEther } from "ethers";
+const chain = defineChain(43113);
 
 const wallets = [
   createWallet("io.metamask"),
@@ -28,20 +27,96 @@ const wallets = [
   createWallet("io.zerion.wallet"),
 ];
 export function ConnectIt() {
+  const { theme } = useTheme();
   return (
     <ConnectButton
       client={client}
       wallets={wallets}
-      theme={`${useTheme().theme === "dark" ? "dark" : "light"}`}
+      theme={`${theme === "dark" ? "dark" : "light"}`}
       connectModal={{
         size: "wide",
         title: "Connect to VeilX",
         showThirdwebBranding: false,
       }}
-      chain={defineChain(43113)}
+      chain={chain}
       connectButton={{
         label: "Connect Wallet",
       }}
     />
   );
 }
+interface StateContextType {
+  address: string;
+  contract: any;
+  account: any;
+  buyData: (amount: string) => Promise<void>;
+  distributeFunds: (address: string, amount: string) => Promise<void>;
+}
+const StateContext = createContext<StateContextType | undefined>(undefined);
+
+export function StateContextProvider({ children }: { children: ReactNode }) {
+  const activeAccount = useActiveAccount();
+  const [address, setAddress] = useState<string>("");
+  const [contract, setContract] = useState<any>(null);
+  const [account, setAccount] = useState<any>(null);
+  useEffect(() => {
+    if (activeAccount) {
+      setAccount(activeAccount);
+      setAddress(activeAccount.address);
+    }
+  }, [activeAccount]);
+  useEffect(() => {
+    async function contractInit() {
+      if (account) {
+        const contract = await getContract({
+          client,
+          chain: chain,
+          address: "0x91cD7Ce64D50cc4BcA801D159CfF3745249638aD",
+        });
+        setContract(contract);
+      }
+    }
+    contractInit();
+  }, [account]);
+  async function buyData(amount: string) {
+    const transaction = await prepareContractCall({
+      contract,
+      method: "function buyData() payable",
+      params: [],
+      value: toWei(amount),
+    });
+    const tx = await sendTransaction({
+      transaction,
+      account,
+    });
+    console.log(tx);
+  }
+  async function distributeFunds(address: string, amount: string) {
+    const transaction = await prepareContractCall({
+      contract,
+      method: "function distributeFunds(address, uint256)",
+      params: [address, toWei(amount)],
+    });
+    const tx = await sendTransaction({
+      transaction,
+      account,
+    });
+    console.log(tx);
+  }
+  return (
+    <StateContext.Provider
+      value={{ address, contract, account, buyData, distributeFunds }}
+    >
+      {children}
+    </StateContext.Provider>
+  );
+}
+export const useStateContext = () => {
+  const context = useContext(StateContext);
+  if (context === undefined) {
+    throw new Error(
+      "useStateContext must be used within a StateContextProvider"
+    );
+  }
+  return context;
+};
