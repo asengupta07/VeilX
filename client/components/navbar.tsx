@@ -35,13 +35,18 @@ export default function Component() {
           />
         </Link>
         <div className="hidden md:flex items-center space-x-6 mr-auto ml-8">
-          {["About Us", "How to Use", "Features", "Marketplace"].map((item) => (
+          {[
+            { name: "About Us", route: "/about" },
+            { name: "How to Use", route: "/how-to-use" },
+            { name: "Features", route: "/features" },
+            { name: "Marketplace", route: "/marketplace" },
+          ].map(({ name, route }) => (
             <Link
-              key={item}
-              href={`/${item.toLowerCase().replace(" ", "-")}`}
+              key={name}
+              href={route}
               className="relative text-gray-800 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-300"
             >
-              {item}
+              {name}
               <span className="absolute left-0 bottom-0 w-full h-0.5 bg-purple-600 dark:bg-purple-400 transform scale-x-0 transition-transform duration-300 origin-left hover:scale-x-100" />
             </Link>
           ))}
