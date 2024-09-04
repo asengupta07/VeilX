@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CheckedState } from "@radix-ui/react-checkbox";
 import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 import { useSearchParams } from "next/navigation";
 import { useStateContext } from "../contexts/StateContext";
@@ -152,8 +153,8 @@ export default function DocumentPreviewPage() {
               <Checkbox
                 id="consent"
                 checked={consentGiven}
-                onCheckedChange={({ checked }: { checked: any }) =>
-                  setConsentGiven(checked as boolean)
+                onCheckedChange={(checked: CheckedState) =>
+                  setConsentGiven(!!checked)
                 }
               />
               <label

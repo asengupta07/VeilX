@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import ThemeToggle from "@/components/component/ThemeToggle";
 import { ThirdwebProvider } from "thirdweb/react";
 import { StateContextProvider } from "@/app/contexts/StateContext";
+import { AuthProvider } from "./contexts/authContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,8 +26,10 @@ export default function RootLayout({
         <ThirdwebProvider>
           <StateContextProvider>
             <ThemeProvider attribute="class">
-              <Navbar />
-              {children}
+              <AuthProvider>
+                <Navbar />
+                {children}
+              </AuthProvider>
             </ThemeProvider>
           </StateContextProvider>
         </ThirdwebProvider>
