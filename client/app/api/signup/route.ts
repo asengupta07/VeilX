@@ -7,7 +7,6 @@ import UserSchema from '@/app/_models/schema';
 import { hash } from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-// Ensure JWT_SECRET is defined and of type string
 const secretKey = process.env.JWT_SECRET as string;
 
 interface UserRequestBody {
@@ -17,7 +16,7 @@ interface UserRequestBody {
   confirmPassword: string;
 }
 
-async function posthandler (req: NextRequest) {
+async function posthandler(req: NextRequest) {
   const { email, password, username, confirmPassword }: UserRequestBody = await req.json();
   
   if (!email || !password || !username || !confirmPassword) {
@@ -32,10 +31,10 @@ async function posthandler (req: NextRequest) {
     await connectToDatabase();
     
     const User = mongoose.model('User', UserSchema);
-    const user = await User.findOne({ email });
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
 
-    if (user) {
-      return NextResponse.json({ message: 'User already exists' }, { status: 400 });
+    if (existingUser) {
+      return NextResponse.json({ message: 'User with this email or username already exists' }, { status: 400 });
     }
 
     const hashedPassword = await hash(password, 12);
@@ -47,15 +46,19 @@ async function posthandler (req: NextRequest) {
     
     await newUser.save();
     
-    // Use `secretKey` with type assertion for JWT sign
     const token = jwt.sign({ userId: newUser._id }, secretKey);
 
-    return NextResponse.json({ token, userId: newUser._id }, { status: 201 });
+    return NextResponse.json({ 
+      token, 
+      userId: newUser._id, 
+      email: newUser.email, 
+      username: newUser.username 
+    }, { status: 201 });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
-};
+}
 
 export {
   posthandler as POST
