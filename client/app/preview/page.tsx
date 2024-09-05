@@ -16,13 +16,15 @@ import { CheckedState } from "@radix-ui/react-checkbox";
 import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 import { useSearchParams } from "next/navigation";
 import { useStateContext } from "../contexts/StateContext";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "@/lib/firebase";
+import { useAuth } from "../contexts/authContext";
 
 export default function DocumentPreviewPage() {
   const { distributeReward, address } = useStateContext();
   const [originalFileUrl, setOriginalFileUrl] = useState<string | null>(null);
   const [redactedFileUrl, setRedactedFileUrl] = useState<string | null>(null);
   const [consentGiven, setConsentGiven] = useState(false);
-  const [randomAmount, setRandomAmount] = useState<string>("");
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -48,14 +50,42 @@ export default function DocumentPreviewPage() {
     }
   };
 
-  const handleStoreInDatabase = () => {
+  const handleStoreInDatabase = async () => {
+    const { email } = useAuth();
     const rand = (Math.random() * 0.09 + 0.01).toFixed(2); // Random amount between 0.01 and 0.1
-    setRandomAmount(rand);
-    if (consentGiven) {
-      console.log("Storing in secure database...");
-      distributeReward(address, rand);
-    } else {
-      alert("Please give consent before storing in the database.");
+
+    if (redactedFileUrl) {
+      try {
+        const response = await fetch(redactedFileUrl);
+        const blob = await response.blob();
+
+        const file = new File([blob], "redacted_document.pdf", {
+          type: blob.type,
+        });
+
+        // Firebase Storage reference
+        const storageRef = ref(storage, `documents/${file.name}${Date.now()}`);
+        const snapshot = await uploadBytes(storageRef, file);
+        const firebaseUrl = await getDownloadURL(snapshot.ref);
+
+        const dbResponse = await fetch("/api/upload", {
+          method: "PATCH", // Changed from POST to PATCH
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email, // Assuming 'address' is the user's email
+            imageUrl: firebaseUrl,
+          }),
+        });
+        if (dbResponse.ok) {
+          alert("Document stored successfully!");
+        }
+        distributeReward(address, rand);
+      } catch (error) {
+        console.error("Error uploading to Firebase: ", error);
+        alert("Failed to upload redacted document. Please try again.");
+      }
     }
   };
 

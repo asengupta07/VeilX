@@ -1,4 +1,4 @@
-"use server"
+"use server";
 
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase from '../../_middleware/mongodb';
@@ -14,7 +14,7 @@ interface UserRequestBody {
   password: string;
 }
 
-async function posthandler (req : NextRequest) {
+async function posthandler(req: NextRequest) {
   const { identifier, password }: UserRequestBody = await req.json();
 
   if (!identifier || !password) {
@@ -39,12 +39,17 @@ async function posthandler (req : NextRequest) {
 
     const token = jwt.sign({ userId: user._id }, secretKey);
 
-    return NextResponse.json({ token, userId: user._id }, { status: 200 });
+    return NextResponse.json({ 
+      token, 
+      userId: user._id, 
+      email: user.email, 
+      username: user.username 
+    }, { status: 200 });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
-};
+}
 
 export {
   posthandler as POST

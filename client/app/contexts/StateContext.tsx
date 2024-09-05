@@ -94,7 +94,7 @@ export function StateContextProvider({ children }: { children: ReactNode }) {
   async function distributeReward(address: string, amount: string) {
     const transaction = await prepareContractCall({
       contract,
-      method: "function distributeFunds(address, uint256)",
+      method: "function distributeReward(address, uint256)",
       params: [address, toWei(amount)],
     });
     const tx = await sendTransaction({
