@@ -5,10 +5,13 @@ import re
 import logging
 import google.generativeai as genai
 import ast
-import dotenv
+from dotenv import load_dotenv
+import os
 
-API_KEY = dotenv.load_dotenv().get("API_KEY")
-GOOGLE_API_KEY = dotenv.load_dotenv().get("GOOGLE_API_KEY")
+load_dotenv()
+
+API_KEY = os.getenv("API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
