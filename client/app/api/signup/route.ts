@@ -30,7 +30,7 @@ async function posthandler(req: NextRequest) {
   try {
     await connectToDatabase();
     
-    const User = mongoose.model('User', UserSchema);
+    const User = mongoose.models.User || mongoose.model('User', UserSchema);
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
 
     if (existingUser) {

@@ -16,6 +16,7 @@ import {
   sendTransaction,
   toWei,
   defineChain,
+  waitForReceipt,
 } from "thirdweb";
 const chain = defineChain(43113);
 
@@ -85,11 +86,16 @@ export function StateContextProvider({ children }: { children: ReactNode }) {
       params: [],
       value: toWei(amount),
     });
-    const tx = await sendTransaction({
+    const { transactionHash } = await sendTransaction({
       transaction,
       account,
     });
-    console.log(tx);
+    const receipt = await waitForReceipt({
+      client,
+      chain,
+      transactionHash,
+    });
+    console.log(receipt);
   }
   async function distributeReward(address: string, amount: string) {
     const transaction = await prepareContractCall({
@@ -101,7 +107,13 @@ export function StateContextProvider({ children }: { children: ReactNode }) {
       transaction,
       account,
     });
-    console.log(tx);
+
+    const receipt = await waitForReceipt({
+      client,
+      chain,
+      transactionHash: tx.transactionHash,
+    });
+    console.log(receipt);
   }
   return (
     <StateContext.Provider
