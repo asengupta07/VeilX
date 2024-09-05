@@ -18,7 +18,7 @@ import { useSearchParams } from "next/navigation";
 import { useStateContext } from "../contexts/StateContext";
 
 export default function DocumentPreviewPage() {
-  const { distributeFunds, address } = useStateContext();
+  const { distributeReward, address } = useStateContext();
   const [originalFileUrl, setOriginalFileUrl] = useState<string | null>(null);
   const [redactedFileUrl, setRedactedFileUrl] = useState<string | null>(null);
   const [consentGiven, setConsentGiven] = useState(false);
@@ -53,7 +53,7 @@ export default function DocumentPreviewPage() {
     setRandomAmount(rand);
     if (consentGiven) {
       console.log("Storing in secure database...");
-      distributeFunds(address, rand);
+      distributeReward(address, rand);
     } else {
       alert("Please give consent before storing in the database.");
     }
@@ -164,21 +164,6 @@ export default function DocumentPreviewPage() {
                 I consent to storing this document in the secure database
               </label>
             </motion.div>
-            {consentGiven && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="mt-4"
-              >
-                <Button
-                  onClick={() => distributeFunds(address, randomAmount)}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
-                >
-                  Distribute Funds ({randomAmount} ETH)
-                </Button>
-              </motion.div>
-            )}
           </CardContent>
           <CardFooter>
             <p className="text-sm text-purple-600 text-center w-full">
