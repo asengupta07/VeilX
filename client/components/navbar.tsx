@@ -8,11 +8,14 @@ import { ConnectIt } from "@/app/contexts/StateContext";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import ThemeToggle from "./component/ThemeToggle";
+import { useAuth } from "@/app/contexts/authContext";
 
 export default function Component() {
   const pathname = usePathname();
   const router = useRouter();
   const isFixedNav = ["/", "/login", "/uploads", "/preview"].includes(pathname);
+  const { token, username } = useAuth();
+  const { theme } = useTheme();
 
   return (
     <nav
@@ -23,11 +26,7 @@ export default function Component() {
       <div className="container flex items-center justify-between mx-auto">
         <Link href="/" className="flex items-center space-x-4">
           <Image
-            src={
-              useTheme().theme === "light"
-                ? "/VeilX_Dark.png"
-                : "/VeilX_Logo.png"
-            }
+            src={theme === "light" ? "/VeilX_Dark.png" : "/VeilX_Logo.png"}
             alt="Logo"
             width={100}
             height={100}
@@ -53,7 +52,13 @@ export default function Component() {
         </div>
         <div className="flex items-center space-x-4">
           <ThemeToggle />
-          {pathname === "/login" ? (
+          {token ? (
+            <Link href="/uploads">
+              <a className="text-gray-800 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-300">
+                {username}
+              </a>
+            </Link>
+          ) : pathname === "/login" ? (
             <Button
               variant="ghost"
               className="text-gray-800 hover:text-purple-700 hover:bg-purple-100 dark:text-white dark:hover:text-purple-200 dark:hover:bg-purple-800/20"
