@@ -12,3 +12,4 @@ Requests
 torch
 ultralytics
 google.generativeai
+python-dotenv
