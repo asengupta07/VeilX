@@ -45,21 +45,6 @@ const products = [
 ];
 
 export default function Component() {
-  const [darkMode, setDarkMode] = useState(false);
-
-  useEffect(() => {
-    const isDarkMode = localStorage.getItem("darkMode") === "true";
-    setDarkMode(isDarkMode);
-    document.documentElement.classList.toggle("dark", isDarkMode);
-  }, []);
-
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem("darkMode", newDarkMode.toString());
-    document.documentElement.classList.toggle("dark", newDarkMode);
-  };
-
   return (
     <div className="min-h-[90vh] bg-white dark:bg-black p-8 transition-colors duration-300">
       <h1 className="text-5xl font-bold text-center mb-12 text-black dark:text-white">
