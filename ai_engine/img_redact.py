@@ -4,15 +4,15 @@ import pytesseract
 import json
 import requests
 import logging
-import torch
 from PIL import Image
 from ultralytics import YOLO
+import dotenv
 
 pytesseract.pytesseract.tesseract_cmd = ( r'/usr/bin/tesseract' )
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-API_KEY = "adc4ae97-fa05-4faf-b1b4-a72805d035c4"  # Replace with your actual API key
+API_KEY = dotenv.load_dotenv().get("API_KEY")
 
 def perform_ocr(image):
     # Convert OpenCV image to PIL Image
