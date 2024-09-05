@@ -4,6 +4,7 @@ import requests
 import re
 import logging
 import google.generativeai as genai
+import ast
 
 API_KEY = "adc4ae97-fa05-4faf-b1b4-a72805d035c4"
 GOOGLE_API_KEY = "AIzaSyDdwSHEaQfEkeIXd8h2T4uIPaG4M6kZijk"
@@ -21,6 +22,25 @@ def extract_text_from_pdf(pdf_path):
         page = doc[page_num]
         text += page.get_text()
     return text, doc
+
+
+def extract_json(response_text):
+    # Regex to detect and extract JSON from the response
+    try:
+        json_data = json.loads(response_text)
+        return json_data
+    except json.JSONDecodeError:
+        json_pattern = re.search(r'```(JSON|json)?\s*(.*?)```', response_text, re.DOTALL)
+        if json_pattern:
+            json_string = json_pattern.group(2)
+            try:
+                json_data = ast.literal_eval(json_string)
+                return json_data
+            except json.JSONDecodeError as e:
+                logging.error(f"Error decoding JSON: {str(e)}")
+                return None
+    return None
+
 
 def get_gemini_response(prompt):
     try:
@@ -78,7 +98,7 @@ def find_sensitive_data(text):
         "    // Add ALL identified items\n"
         "]\n\n"
         "Err on the side of caution - if in doubt, include it. However, do not flag single letters or common words unless they are part of a larger sensitive item. "
-        "Provide your comprehensive analysis based on these instructions. Do not include codeblocks, only the required JSON data in String format.\n\n"
+        "Provide your comprehensive analysis based on these instructions. Only return the JSON.\n\n"
         f"Text to analyze:\n{text}"
     )
     
@@ -108,7 +128,7 @@ def find_sensitive_data(text):
         print(gemini_response)
         if gemini_response:
             try:
-                entities = json.loads(gemini_response)
+                entities = extract_json(gemini_response)
             except json.JSONDecodeError:
                 logging.error("Error: Unable to parse JSON response from Gemini API")
                 return []
@@ -154,14 +174,20 @@ def redact_text_in_pdf(pdf_doc, sensitive_data):
     for page_num in range(pdf_doc.page_count):
         page = pdf_doc[page_num]
         for data, start, end, data_type in sensitive_data:
-            # Find the sensitive data's position in the page
-            instances = page.search_for(data)
+            # Redact the full sensitive data
+            instances = page.search_for(data, quads=True)
             for inst in instances:
-                # Log each redaction
-                logging.info(f"Redacting on page {page_num + 1}: {data} ({data_type})")
-                # Draw a black rectangle over the sensitive data
-                page.add_redact_annot(inst, fill=(0, 0, 0))
-        
+                logging.info(f"Redacting full text on page {page_num + 1}: {data} ({data_type})")
+                page.add_redact_annot(inst, fill=(1, 1, 1))
+
+            # Split the data into words and redact each word
+            words = data.split()
+            for word in words:
+                word_instances = page.search_for(word, quads=True)
+                for word_inst in word_instances:
+                    logging.info(f"Redacting word on page {page_num + 1}: {word} ({data_type})")
+                    page.add_redact_annot(word_inst, fill=(1, 1, 1))
+
         # Apply redactions for this page
         page.apply_redactions()
 
@@ -175,7 +201,7 @@ def redact_images_in_pdf(pdf_doc):
             # Log each image redaction
             logging.info(f"Redacting image on page {page_num + 1}")
             # Create a black rectangle to cover the image
-            page.add_redact_annot(rect, fill=(0, 0, 0))
+            page.add_redact_annot(rect, fill=(1,1,1))
         
         # Apply redactions for this page
         page.apply_redactions()
