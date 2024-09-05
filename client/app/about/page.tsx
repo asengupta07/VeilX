@@ -81,7 +81,7 @@ export default function AboutUs() {
       {/* What We Offer Section */}
       <section className="py-20 bg-gray-100 dark:bg-gray-800">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">
+          <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl text-center mb-12">
             What We Offer
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -113,8 +113,8 @@ export default function AboutUs() {
       {/* Why VeilX Section */}
       <section className="py-20 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            Why Choose VeilX?
+          <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl text-center mb-12">
+            Why Choose <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">VeilX</span>?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <ComparisonCard
@@ -148,7 +148,7 @@ export default function AboutUs() {
       {/* FAQ Section */}
       <section className="py-20 bg-gray-50 dark:bg-zinc-800">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">
+          <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl text-center mb-12">
             Frequently Asked Questions
           </h2>
           <div className="w-full max-w-3xl mx-auto">
@@ -228,7 +228,7 @@ export default function AboutUs() {
       {/* Testimonial Section */}
       <section className="py-20 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">
+          <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl text-center mb-12">
             What Our Users Say
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
