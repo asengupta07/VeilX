@@ -443,9 +443,8 @@ export default function Component() {
           <div className="border-t border-muted-foreground/20 mt-8 pt-8 text-center ">
           <span className="max-w-lg text-muted-foreground text-lg">
           <p>
-              &copy; {new Date().getFullYear()} <span className=" bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">
-              VeilX
-            </span>. All rights reserved.
+              &copy; {new Date().getFullYear()} 
+              {" "}VeilX. All rights reserved.
             </p>
           </span>
             
