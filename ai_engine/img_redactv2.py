@@ -6,23 +6,22 @@ import requests
 import logging
 from PIL import Image
 from ultralytics import YOLO
-import dotenv
+from dotenv import load_dotenv
+import os
 
-# Set up logging
+load_dotenv()
+
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-API_KEY = dotenv.load_dotenv().get("API_KEY")
+API_KEY = os.getenv("API_KEY")
 
 def perform_ocr(image):
-    # Initialize easyocr Reader
-    reader = easyocr.Reader(['en'])  # Specify languages as needed
-    # Perform OCR on the image
+    reader = easyocr.Reader(['en']) 
     results = reader.readtext(image, detail=1)
     
-    # Prepare the OCR data similar to pytesseract's output
     ocr_data = {'text': [], 'left': [], 'top': [], 'width': [], 'height': []}
     for (bbox, text, prob) in results:
-        if prob > 0.5:  # Confidence threshold
+        if prob > 0.5:  
             (top_left, top_right, bottom_right, bottom_left) = bbox
             x_min = int(top_left[0])
             y_min = int(top_left[1])

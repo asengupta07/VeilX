@@ -11,3 +11,4 @@ pytesseract
 Requests
 torch
 ultralytics
+google.generativeai
