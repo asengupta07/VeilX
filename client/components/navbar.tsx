@@ -9,12 +9,20 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 import ThemeToggle from "./component/ThemeToggle";
 import { useAuth } from "@/app/contexts/authContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Component() {
   const pathname = usePathname();
   const router = useRouter();
   const isFixedNav = ["/", "/login", "/uploads", "/preview"].includes(pathname);
-  const { token, username } = useAuth();
+  const { token, username, logout } = useAuth();
   const { theme } = useTheme();
 
   return (
@@ -53,11 +61,29 @@ export default function Component() {
         <div className="flex items-center space-x-4">
           <ThemeToggle />
           {token ? (
-            <Link href="/uploads">
-              <a className="text-gray-800 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-300">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="text-gray-800 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-300">
                 {username}
-              </a>
-            </Link>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem
+                  className="pointer-events-auto"
+                  onClick={() => router.push("/my-docs")}
+                >
+                  My Docs
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="pointer-events-auto"
+                  onClick={() => {
+                    logout();
+                    router.push("/");
+                  }}
+                >
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : pathname === "/login" ? (
             <Button
               variant="ghost"

@@ -19,6 +19,7 @@ import { useAuth } from "@/app/contexts/authContext";
 import { useRouter } from "next/navigation";
 
 export default function AnimatedLoginSignup() {
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [loginType, setLoginType] = useState("email");
   const { login } = useAuth();
@@ -42,7 +43,7 @@ export default function AnimatedLoginSignup() {
     e.preventDefault();
 
     const data = isLogin
-      ? { login: formData.login, password: formData.password }
+      ? { identifier: formData.login, password: formData.password }
       : {
           email: formData.email,
           username: formData.username,
@@ -66,7 +67,6 @@ export default function AnimatedLoginSignup() {
         console.log("Success:", result);
         login(result.token, result.email, result.username);
         //redirect to home page
-        const router = useRouter();
         router.push("/");
       } else {
         const error = await response.json();
