@@ -2,12 +2,11 @@ from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 from redact import redact
 from img_redact import redactImg
-from redactv2 import get_sensitive, redactv2
+from redactv2 import get_sensitive, redactv2, annotate_pdf
 import os
 import shutil
 
 app = Flask(__name__)
-
 CORS(app)
 
 @app.route('/redactv2', methods=['POST'])
@@ -41,11 +40,14 @@ def sens():
 
     if doc.filename == "":
         return "No selected file", 400
+    
     in_path = f"temp/{doc.filename}"
+    annotated_path = f"temp/annotated_{doc.filename}"
 
     doc.save(in_path)
 
-    sensitive =  get_sensitive(in_path)
+    # Get sensitive data
+    sensitive = get_sensitive(in_path)
     resp = []
     for sens in sensitive:
         li = {}
@@ -54,11 +56,22 @@ def sens():
         li['end'] = sens[2]
         li['type'] = sens[3]
         resp.append(li)
+    
+    # Annotate the PDF with sensitive information
+    annotate_pdf(in_path, sensitive, annotated_path)
 
+    # Return both the annotated PDF and JSON response
     return jsonify({
         'doc': doc.filename,
-        'sensitive': resp
+        'sensitive': resp,
+        'annotated_pdf': f"/download_annotated/{doc.filename}"
     })
+
+
+@app.route('/download_annotated/<filename>', methods=['GET'])
+def download_annotated(filename):
+    annotated_path = f"temp/annotated_{filename}"
+    return send_file(annotated_path, as_attachment=True, download_name=f"annotated_{filename}")
 
 
 def clear_temp_folder():
