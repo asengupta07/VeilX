@@ -15,11 +15,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useAuth } from "@/app/contexts/authContext";
+import { useRouter } from "next/navigation";
 
 export default function AnimatedLoginSignup() {
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [loginType, setLoginType] = useState("email");
-
+  const { login } = useAuth();
   // State for form fields
   const [formData, setFormData] = useState({
     email: "",
@@ -40,7 +43,7 @@ export default function AnimatedLoginSignup() {
     e.preventDefault();
 
     const data = isLogin
-      ? { login: formData.login, password: formData.password }
+      ? { identifier: formData.login, password: formData.password }
       : {
           email: formData.email,
           username: formData.username,
@@ -62,7 +65,9 @@ export default function AnimatedLoginSignup() {
       if (response.ok) {
         const result = await response.json();
         console.log("Success:", result);
-        // Handle successful login/signup (e.g., redirect, show a message)
+        login(result.token, result.email, result.username);
+        //redirect to home page
+        router.push("/");
       } else {
         const error = await response.json();
         console.error("Error:", error);

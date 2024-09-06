@@ -16,6 +16,7 @@ import {
   sendTransaction,
   toWei,
   defineChain,
+  waitForReceipt,
 } from "thirdweb";
 const chain = defineChain(43113);
 
@@ -50,7 +51,7 @@ interface StateContextType {
   contract: any;
   account: any;
   buyData: (amount: string) => Promise<void>;
-  distributeFunds: (address: string, amount: string) => Promise<void>;
+  distributeReward: (address: string, amount: string) => Promise<void>;
 }
 const StateContext = createContext<StateContextType | undefined>(undefined);
 
@@ -85,27 +86,38 @@ export function StateContextProvider({ children }: { children: ReactNode }) {
       params: [],
       value: toWei(amount),
     });
-    const tx = await sendTransaction({
+    const { transactionHash } = await sendTransaction({
       transaction,
       account,
     });
-    console.log(tx);
+    const receipt = await waitForReceipt({
+      client,
+      chain,
+      transactionHash,
+    });
+    console.log(receipt);
   }
-  async function distributeFunds(address: string, amount: string) {
+  async function distributeReward(address: string, amount: string) {
     const transaction = await prepareContractCall({
       contract,
-      method: "function distributeFunds(address, uint256)",
+      method: "function distributeReward(address, uint256)",
       params: [address, toWei(amount)],
     });
     const tx = await sendTransaction({
       transaction,
       account,
     });
-    console.log(tx);
+
+    const receipt = await waitForReceipt({
+      client,
+      chain,
+      transactionHash: tx.transactionHash,
+    });
+    console.log(receipt);
   }
   return (
     <StateContext.Provider
-      value={{ address, contract, account, buyData, distributeFunds }}
+      value={{ address, contract, account, buyData, distributeReward }}
     >
       {children}
     </StateContext.Provider>

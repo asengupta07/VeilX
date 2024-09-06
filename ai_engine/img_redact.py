@@ -4,15 +4,22 @@ import pytesseract
 import json
 import requests
 import logging
-import torch
 from PIL import Image
 from ultralytics import YOLO
+from dotenv import load_dotenv
+import ast
+import google.generativeai as genai
+import re
+import os
+
+load_dotenv()
 
 pytesseract.pytesseract.tesseract_cmd = ( r'/usr/bin/tesseract' )
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-API_KEY = "adc4ae97-fa05-4faf-b1b4-a72805d035c4"  # Replace with your actual API key
+API_KEY = os.getenv("API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 def perform_ocr(image):
     # Convert OpenCV image to PIL Image
@@ -20,8 +27,53 @@ def perform_ocr(image):
     ocr_data = pytesseract.image_to_data(pil_image, output_type=pytesseract.Output.DICT, lang='eng')
     return ocr_data
 
+
+def extract_json(response_text):
+    # Regex to detect and extract JSON from the response
+    try:
+        json_data = json.loads(response_text)
+        return json_data
+    except json.JSONDecodeError:
+        json_pattern = re.search(r'```(JSON|json)?\s*(.*?)```', response_text, re.DOTALL)
+        if json_pattern:
+            json_string = json_pattern.group(2)
+            try:
+                json_data = ast.literal_eval(json_string)
+                return json_data
+            except json.JSONDecodeError as e:
+                logging.error(f"Error decoding JSON: {str(e)}")
+                return None
+    return None
+
+
+def get_gemini_response(prompt):
+    try:
+        model = genai.GenerativeModel('gemini-pro')
+        safety_settings = [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_NONE",
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_NONE",
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_NONE",
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_NONE",
+            },
+        ]
+        response = model.generate_content(prompt, safety_settings=safety_settings)
+        return response.text
+    except Exception as e:
+        logging.error(f"Error in Gemini API call: {str(e)}")
+        return None
+
 def find_sensitive_data(text):
-    print(text)
     prompt = (
         "You are a powerful text analysis tool designed to identify all potentially sensitive, personally identifiable, or traceable information in text. "
         "Please analyze the following text and flag ALL instances of the following types of information:\n\n"
@@ -49,9 +101,11 @@ def find_sensitive_data(text):
         "    }\n"
         "    // Add ALL identified items\n"
         "]\n\n"
+        "Err on the side of caution - if in doubt, include it. However, do not flag single letters or common words unless they are part of a larger sensitive item. "
+        "Provide your comprehensive analysis based on these instructions. Only return the JSON.\n\n"
         f"Text to analyze:\n{text}"
     )
-    
+
     data = {"messages": [{"role": "user", "content": prompt}]}
 
     headers = {
@@ -62,16 +116,62 @@ def find_sensitive_data(text):
     response = requests.post('https://api.jabirproject.org/generate', json=data, headers=headers)
     if response.status_code == 200:
         entities_json = response.json().get("result", {}).get("content", "")
-        print(entities_json)
         try:
             entities = json.loads(entities_json)
         except json.JSONDecodeError:
-            logging.error("Error: Unable to parse JSON response")
-            return []
+            logging.error("Error: Unable to parse JSON response from Jabir API")
+            entities = None
     else:
-        logging.error(f"Error: {response.status_code} - {response.text}")
-        return []
-    return entities
+        logging.error(f"Error in Jabir API call: {response.status_code} - {response.text}")
+        entities = None
+
+    if entities is None:
+        logging.info("Falling back to Gemini Pro API")
+        gemini_response = get_gemini_response(prompt)
+        if gemini_response:
+            try:
+                entities = extract_json(gemini_response)
+            except json.JSONDecodeError:
+                logging.error("Error: Unable to parse JSON response from Gemini API")
+                return []
+        else:
+            logging.error("Both Jabir and Gemini API calls failed")
+            return []
+
+    sensitive_data = []
+
+    # Processing entities returned by the API
+    for entity in entities:
+        item_text = entity['text']
+        if len(item_text) <= 1:  # Skip single characters
+            continue
+        if item_text.lower() in ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for']:  # Skip common words
+            continue
+        sensitive_data.append({
+            "type": entity['type'],
+            "text": item_text
+        })
+
+    # Additional regex patterns for URLs and potential identifiers
+    url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+    identifier_pattern = re.compile(r'\b(?:[A-Z0-9]{8,}|[A-Z]{2,}\d+|\d+[A-Z]{2,})\b')
+
+    # Adding URLs detected by regex
+    for match in url_pattern.finditer(text):
+        sensitive_data.append({
+            "type": "URL",
+            "text": match.group()
+        })
+
+    # Adding potential identifiers detected by regex
+    for match in identifier_pattern.finditer(text):
+        sensitive_data.append({
+            "type": "Potential Identifier",
+            "text": match.group()
+        })
+
+    # Return the final result in the required JSON format
+    return sensitive_data
 
 def redact_sensitive_data(image, ocr_data, sensitive_data):
     height, width = image.shape[:2]

@@ -1,286 +1,457 @@
 import Link from "next/link";
 import { TracingBeam } from "@/components/ui/tracing-beam";
+import {
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin,
+  Youtube,
+  Github,
+} from "lucide-react";
 
 export default function Component() {
   return (
-    <TracingBeam>
-      <header className="flex flex-col py-5 mt-5">
-        <h1 className="text-6xl font-bold text-center mb-4">
-          <span className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">
-            VeilX
-          </span>{" "}
-          Features
-        </h1>
-        <p className="text-xl text-center text-muted-foreground">
-          Secure document redaction powered by AI
-        </p>
-      </header>
-      <div className="flex flex-col min-h-screen pt-24">
-        <main className="flex-1">
-          <section className="bg-muted/40 py-16 md:py-28 lg:py-40">
-            <div className="container px-4 md:px-6">
-              <div className="grid gap-8 lg:grid-cols-2 lg:gap-16">
-                <div className="space-y-6 mt-5">
-                  <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-                    Redact with Confidence
-                  </h1>
-                  <p className="max-w-lg text-muted-foreground text-lg md:text-xl lg:text-0.5xl">
-                    Effortlessly redact sensitive information from any document,
-                    image, or file with VeilX’s powerful redaction tools.
-                  </p>
-                </div>
-                <div className="grid gap-6">
-                  <div className="bg-background rounded-lg p-6 shadow-lg">
-                    <h3 className="text-xl font-semibold mb-4">
-                      Document Redaction
-                    </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-                      <div className="flex flex-col items-center gap-2">
-                        <FileIcon className="w-10 h-10" />
-                        <span className="text-sm">Upload</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <PencilIcon className="w-10 h-10" />
-                        <span className="text-sm">Redact</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <DownloadIcon className="w-10 h-10" />
-                        <span className="text-sm">Download</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <SaveIcon className="w-10 h-10" />
-                        <span className="text-sm">Save</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-background rounded-lg p-6 shadow-lg">
-                    <h3 className="text-xl font-semibold mb-4">
-                      Storage Options
-                    </h3>
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="flex flex-col items-center gap-2">
-                        <DatabaseIcon className="w-10 h-10" />
-                        <span className="text-sm">VeilX Database</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <CoinsIcon className="w-10 h-10" />
-                        <span className="text-sm">Blockchain</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-          <section className="bg-background py-16 md:py-28 lg:py-40">
-            <div className="container px-4 md:px-6">
-              <div className="grid gap-8 lg:grid-cols-2 lg:gap-16">
-                <div className="space-y-6">
-                  <div className="mt-8">
-                    <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-                      Secure Document Storage
-                    </h2>
-                    <p className="max-w-lg text-muted-foreground text-lg md:text-xl lg:text-0.5xl mt-5">
-                      Choose where to store your redacted documents - in VeilX’s
-                      secure database or on the blockchain. Maintain full
-                      control over your sensitive data.
+    <>
+      <TracingBeam>
+        <header className="flex flex-col py-5 mt-5">
+          <h1 className="text-6xl font-bold text-center mb-4">
+            <span className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">
+              VeilX
+            </span>{" "}
+            Features
+          </h1>
+          <p className="text-xl text-center text-muted-foreground">
+            Secure document redaction powered by AI
+          </p>
+        </header>
+        <div></div>
+        <div className="flex flex-col min-h-screen pt-24">
+          <main className="flex-1">
+            <section className="bg-muted/40 py-16 md:py-28 lg:py-40">
+              <div className="container px-4 md:px-6">
+                <div className="grid gap-8 lg:grid-cols-2 lg:gap-16">
+                  <div className="space-y-6 mt-5">
+                    <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+                      Redact with Confidence
+                    </h1>
+                    <p className="max-w-lg text-muted-foreground text-lg md:text-xl lg:text-0.5xl">
+                      Effortlessly redact sensitive information from any
+                      document, image, or file with VeilX’s powerful redaction
+                      tools.
                     </p>
                   </div>
+                  <div className="grid gap-6">
+                    <div className="bg-background rounded-lg p-6 shadow-lg">
+                      <h3 className="text-xl font-semibold mb-4">
+                        Document Redaction
+                      </h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                        <div className="flex flex-col items-center gap-2">
+                          <FileIcon className="w-10 h-10" />
+                          <span className="text-sm">Upload</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                          <PencilIcon className="w-10 h-10" />
+                          <span className="text-sm">Redact</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                          <DownloadIcon className="w-10 h-10" />
+                          <span className="text-sm">Download</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                          <SaveIcon className="w-10 h-10" />
+                          <span className="text-sm">Save</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-background rounded-lg p-6 shadow-lg">
+                      <h3 className="text-xl font-semibold mb-4">
+                        Storage Options
+                      </h3>
+                      <div className="grid grid-cols-2 gap-6">
+                        <div className="flex flex-col items-center gap-2">
+                          <DatabaseIcon className="w-10 h-10" />
+                          <span className="text-sm">VeilX Database</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                          <CoinsIcon className="w-10 h-10" />
+                          <span className="text-sm">Blockchain</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section className="bg-background py-16 md:py-28 lg:py-40">
+              <div className="container px-4 md:px-6">
+                <div className="grid gap-8 lg:grid-cols-2 lg:gap-16">
+                  <div className="space-y-6">
+                    <div className="mt-8">
+                      <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+                        Secure Document Storage
+                      </h2>
+                      <p className="max-w-lg text-muted-foreground text-lg md:text-xl lg:text-0.5xl mt-5">
+                        Choose where to store your redacted documents - in
+                        VeilX’s secure database or on the blockchain. Maintain
+                        full control over your sensitive data.
+                      </p>
+                    </div>
 
-                  <div className="flex flex-col gap-4 sm:flex-row">
-                    <Link
-                      href="#"
-                      className="inline-flex h-12 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
-                      prefetch={false}
-                    >
-                      Learn More
-                    </Link>
-                    <Link
-                      href="#"
-                      className="inline-flex h-12 items-center justify-center rounded-md border border-input bg-background px-8 text-sm font-medium shadow-md transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
-                      prefetch={false}
-                    >
-                      Try It Now
-                    </Link>
-                  </div>
-                </div>
-                <div className="grid gap-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="flex flex-col items-center gap-4 bg-background rounded-lg p-6 shadow-lg shadow-gray-800">
-                      <DatabaseIcon className="w-10 h-10" />
-                      <h3 className="text-xl font-semibold">VeilX Database</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Store your redacted documents in VeilX’s secure
-                        database.
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-center gap-4 bg-background rounded-lg p-6 shadow-lg shadow-gray-800">
-                      <CoinsIcon className="w-10 h-10" />
-                      <h3 className="text-xl font-semibold">Blockchain</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Store your redacted documents on the blockchain for
-                        maximum security.
-                      </p>
+                    <div className="flex flex-col gap-4 sm:flex-row">
+                      <Link
+                        href="#"
+                        className="inline-flex h-12 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                        prefetch={false}
+                      >
+                        Learn More
+                      </Link>
+                      <Link
+                        href="/uploads"
+                        className="inline-flex h-12 items-center justify-center rounded-md border border-input bg-background px-8 text-sm font-medium shadow-md transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                        prefetch={false}
+                      >
+                        Try It Now
+                      </Link>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="flex flex-col items-center gap-4 bg-background rounded-lg p-6 shadow-lg shadow-gray-800">
-                      <WalletIcon className="w-10 h-10" />
-                      <h3 className="text-xl font-semibold">Connect Wallet</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Connect your digital wallet to store documents on the
-                        blockchain.
-                      </p>
+                  <div className="grid gap-6">
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="flex flex-col items-center gap-4 bg-background rounded-lg p-6 shadow-lg shadow-gray-800">
+                        <DatabaseIcon className="w-10 h-10" />
+                        <h3 className="text-xl font-semibold">
+                          VeilX Database
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Store your redacted documents in VeilX’s secure
+                          database.
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-center gap-4 bg-background rounded-lg p-6 shadow-lg shadow-gray-800">
+                        <CoinsIcon className="w-10 h-10" />
+                        <h3 className="text-xl font-semibold mr-5">
+                          Blockchain
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Store your redacted documents on the blockchain for
+                          maximum security.
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex flex-col items-center gap-4 bg-background rounded-lg p-6 shadow-lg shadow-gray-800">
-                      <StoreIcon className="w-10 h-10" />
-                      <h3 className="text-xl font-semibold">Choose Storage</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Select the storage option that best suits your needs.
-                      </p>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="flex flex-col items-center gap-4 bg-background rounded-lg p-6 shadow-lg shadow-gray-800">
+                        <WalletIcon className="w-10 h-10" />
+                        <h3 className="text-xl font-semibold">
+                          Connect Wallet
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Connect your digital wallet to store documents on the
+                          blockchain.
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-center gap-4 bg-background rounded-lg p-6 shadow-lg shadow-gray-800">
+                        <StoreIcon className="w-10 h-10" />
+                        <h3 className="text-xl font-semibold">
+                          Choose Storage
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Select the storage option that best suits your needs.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+            </section>
+            <section className="bg-muted/40 py-16 md:py-28 lg:py-40">
+              <div className="container px-4 md:px-6">
+                <div className="grid gap-8 lg:grid-cols-2 lg:gap-16">
+                  <div className="space-y-6">
+                    <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+                      Powerful Redaction Tools
+                    </h2>
+                    <p className="max-w-lg text-muted-foreground text-lg md:text-xl lg:text-0.5xl">
+                      VeilX’s advanced redaction tools allow you to quickly and
+                      easily remove sensitive information from any document,
+                      image, or file.
+                    </p>
+                    <div className="flex flex-col gap-4 sm:flex-row">
+                      <Link
+                        href="#"
+                        className="inline-flex h-12 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                        prefetch={false}
+                      >
+                        Explore Features
+                      </Link>
+                      <Link
+                        href="/uploads"
+                        className="inline-flex h-12 items-center justify-center rounded-md border border-input bg-background px-8 text-sm font-medium shadow-md transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                        prefetch={false}
+                      >
+                        Start Free Trial
+                      </Link>
+                    </div>
+                  </div>
+                  <div className="grid gap-6">
+                    <div className="bg-background rounded-lg p-6 shadow-lg">
+                      <h3 className="text-xl font-semibold mb-4">
+                        Redaction in Action
+                      </h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                        <div className="flex flex-col items-center gap-2">
+                          <FileIcon className="w-10 h-10" />
+                          <span className="text-sm">Upload</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                          <PencilIcon className="w-10 h-10" />
+                          <span className="text-sm">Redact</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                          <DownloadIcon className="w-10 h-10" />
+                          <span className="text-sm">Download</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                          <SaveIcon className="w-10 h-10" />
+                          <span className="text-sm">Save</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-background rounded-lg p-4 shadow-sm">
+                      <h3 className="text-xl font-semibold mb-4 ml-2">
+                        Supported File Types
+                      </h3>
+                      <div className="grid grid-cols-4 gap-4 mt-4">
+                        <div className="flex flex-col items-center gap-2">
+                          <FileIcon className="w-8 h-8" />
+                          <span className="text-sm">PDF</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                          <FileIcon className="w-8 h-8" />
+                          <span className="text-sm">DOC</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                          <FileIcon className="w-8 h-8" />
+                          <span className="text-sm">JPG</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                          <FileIcon className="w-8 h-8" />
+                          <span className="text-sm">PNG</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section className="py-12 md:py-24 lg:py-32">
+              <div className="container px-4 md:px-6">
+                <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
+                  <div className="space-y-4">
+                    <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+                      Marketplace for Redacted Documents
+                    </h2>
+                    <p className="max-w-lg text-muted-foreground text-lg md:text-xl lg:text-0.5xl mt-5">
+                      Earn tokens by allowing your redacted documents to be
+                      listed in our secure marketplace. You have full control
+                      over whether your documents are available for sale.
+                    </p>
+                    <div className="flex flex-col gap-2 min-[400px]:flex-row">
+                      <Link
+                        href="#"
+                        className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                        prefetch={false}
+                      >
+                        Learn More
+                      </Link>
+                      <Link
+                        href="#"
+                        className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-8 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                        prefetch={false}
+                      >
+                        Start Earning Tokens
+                      </Link>
+                    </div>
+                  </div>
+                  <div className="grid gap-4">
+                    <div className="bg-background rounded-lg p-4 mt-2 shadow-lg shadow-gray-800">
+                      <div className="flex flex-col justify-center items-center h-full">
+                        <h3 className="text-2xl font-semibold mb-4">
+                          How the Marketplace Works
+                        </h3>
+                        <div className="grid grid-cols-4 gap-4 mt-4">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <UploadIcon className="w-8 h-8" />
+                            <span className="text-sm ml-3">
+                              Upload Document
+                            </span>
+                          </div>
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <ToggleRightIcon className="w-8 h-8" />
+                            <span className="text-sm ml-3">Choose Listing</span>
+                          </div>
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <CoinsIcon className="w-8 h-8 mr-3" />
+                            <span className="text-sm ml-4">Earn Tokens</span>
+                          </div>
+                          <div className="flex flex-col items-center justify-center gap-2 mb-3 mr-5">
+                            <StoreIcon className="w-8 h-8" />
+                            <span className="text-sm">Sell</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </main>
+        </div>
+      </TracingBeam>
+      <footer className="space-y-8 bg-custom-gray-transparent">
+        <div className="container mx-auto px-6 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="mb-8 md:mb-0">
+              <h2 className="text-2xl font-bold text-primary mb-4">
+              <span className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">
+              VeilX
+            </span>
+              </h2>
+              <p className="max-w-lg text-muted-foreground text-lg">
+                Creating amazing experiences for our customers since 2024.
+              </p>
             </div>
-          </section>
-          <section className="bg-muted/40 py-16 md:py-28 lg:py-40">
-            <div className="container px-4 md:px-6">
-              <div className="grid gap-8 lg:grid-cols-2 lg:gap-16">
-                <div className="space-y-6">
-                  <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-                    Powerful Redaction Tools
-                  </h2>
-                  <p className="max-w-lg text-muted-foreground text-lg md:text-xl lg:text-0.5xl">
-                    VeilX’s advanced redaction tools allow you to quickly and
-                    easily remove sensitive information from any document,
-                    image, or file.
-                  </p>
-                  <div className="flex flex-col gap-4 sm:flex-row">
-                    <Link
-                      href="#"
-                      className="inline-flex h-12 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
-                      prefetch={false}
-                    >
-                      Explore Features
-                    </Link>
-                    <Link
-                      href="#"
-                      className="inline-flex h-12 items-center justify-center rounded-md border border-input bg-background px-8 text-sm font-medium shadow-md transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
-                      prefetch={false}
-                    >
-                      Start Free Trial
-                    </Link>
-                  </div>
-                </div>
-                <div className="grid gap-6">
-                  <div className="bg-background rounded-lg p-6 shadow-lg">
-                    <h3 className="text-xl font-semibold mb-4">
-                      Redaction in Action
-                    </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-                      <div className="flex flex-col items-center gap-2">
-                        <FileIcon className="w-10 h-10" />
-                        <span className="text-sm">Upload</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <PencilIcon className="w-10 h-10" />
-                        <span className="text-sm">Redact</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <DownloadIcon className="w-10 h-10" />
-                        <span className="text-sm">Download</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <SaveIcon className="w-10 h-10" />
-                        <span className="text-sm">Save</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-background rounded-lg p-4 shadow-sm">
-                    <h3 className="text-lg font-semibold">
-                      Supported File Types
-                    </h3>
-                    <div className="grid grid-cols-4 gap-4 mt-4">
-                      <div className="flex flex-col items-center gap-2">
-                        <FileIcon className="w-8 h-8" />
-                        <span className="text-sm">PDF</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <FileIcon className="w-8 h-8" />
-                        <span className="text-sm">DOC</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <FileIcon className="w-8 h-8" />
-                        <span className="text-sm">JPG</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <FileIcon className="w-8 h-8" />
-                        <span className="text-sm">PNG</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="ml-8">
+              <h3 className="text-lg font-semibold mb-4">
+                Quick Links
+              </h3>
+              <ul className="space-y-2 max-w-lg text-muted-foreground text-lg">
+                <li>
+                  <Link
+                    href="/"
+                    className="hover:text-primary transition-colors "
+                  >
+                    Home
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/about"
+                    className="hover:text-primary transition-colors "
+                  >
+                    About
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/services"
+                    className="hover:text-primary transition-colors "
+                  >
+                    Services
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/contact"
+                    className="hover:text-primary transition-colors "
+                  >
+                    Contact
+                  </Link>
+                </li>
+              </ul>
             </div>
-          </section>
-           <section className="py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
-              <div className="space-y-4">
-                <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-                  Marketplace for Redacted Documents
-                </h2>
-                <p className="max-w-lg text-muted-foreground text-lg md:text-xl lg:text-0.5xl mt-5">
-                  Earn tokens by allowing your redacted documents to be listed in our secure marketplace. You have full
-                  control over whether your documents are available for sale.
-                </p>
-                <div className="flex flex-col gap-2 min-[400px]:flex-row">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">
+                Legal
+              </h3>
+              <ul className="space-y-2 max-w-lg text-muted-foreground text-lg">
+                <li>
                   <Link
-                    href="#"
-                    className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
-                    prefetch={false}
+                    href="/privacy"
+                    className="hover:text-primary transition-colors "
                   >
-                    Learn More
+                    Privacy Policy
                   </Link>
+                </li>
+                <li>
                   <Link
-                    href="#"
-                    className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-8 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
-                    prefetch={false}
+                    href="/terms"
+                    className="hover:text-primary transition-colors "
                   >
-                    Start Earning Tokens
+                    Terms of Service
                   </Link>
-                </div>
-              </div>
-              <div className="grid gap-4">
-                <div className="bg-background rounded-lg p-4 mt-2 shadow-lg shadow-gray-800">
-                  <h3 className="text-lg font-semibold">How the Marketplace Works</h3>
-                  <div className="grid grid-cols-4 gap-4 mt-4 ">
-                    <div className="flex flex-col items-center gap-2">
-                      <UploadIcon className="w-8 h-8" />
-                      <span className="text-sm">Upload Document</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-2">
-                      <ToggleRightIcon className="w-8 h-8" />
-                      <span className="text-sm">Choose Listing</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-2">
-                      <CoinsIcon className="w-8 h-8" />
-                      <span className="text-sm">Earn Tokens</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-2">
-                      <StoreIcon className="w-8 h-8" />
-                      <span className="text-sm">Sell</span>
-                    </div>
-                  </div>
-                </div>
+                </li>
+                <li>
+                  <Link
+                    href="/cookies"
+                    className="hover:text-primary transition-colors "
+                  >
+                    Cookie Policy
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4 ml-1 ">
+                Follow Us
+              </h3>
+              <div className="flex space-x-4 max-w-lg text-muted-foreground text-lg">
+                <Link
+                  href="https://facebook.com"
+                  className="hover:text-primary transition-colors"
+                >
+                  <Facebook className="h-6 w-6" />
+                  <span className="sr-only">Facebook</span>
+                </Link>
+                <Link
+                  href="https://twitter.com"
+                  className="hover:text-primary transition-colors"
+                >
+                  <Twitter className="h-6 w-6" />
+                  <span className="sr-only">Twitter</span>
+                </Link>
+                <Link
+                  href="https://instagram.com"
+                  className="hover:text-primary transition-colors"
+                >
+                  <Instagram className="h-6 w-6" />
+                  <span className="sr-only">Instagram</span>
+                </Link>
+                <Link
+                  href="https://linkedin.com"
+                  className="hover:text-primary transition-colors"
+                >
+                  <Linkedin className="h-6 w-6" />
+                  <span className="sr-only">LinkedIn</span>
+                </Link>
+                <Link
+                  href="https://youtube.com"
+                  className="hover:text-primary transition-colors"
+                >
+                  <Youtube className="h-6 w-6" />
+                  <span className="sr-only">YouTube</span>
+                </Link>
+                <Link
+                  href="https://github.com"
+                  className="hover:text-primary transition-colors"
+                >
+                  <Github className="h-6 w-6" />
+                  <span className="sr-only">GitHub</span>
+                </Link>
               </div>
             </div>
           </div>
-        </section>
-        </main>
-      </div>
-    </TracingBeam>
+          <div className="border-t border-muted-foreground/20 mt-8 pt-8 text-center ">
+          <span className="max-w-lg text-muted-foreground text-lg">
+          <p>
+              &copy; {new Date().getFullYear()} 
+              {" "}VeilX. All rights reserved.
+            </p>
+          </span>
+            
+          </div>
+        </div>
+      </footer>
+    </>
   );
 }
 

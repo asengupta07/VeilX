@@ -80,4 +80,4 @@ if not os.path.exists("temp"):
 clear_temp_folder()
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host="0.0.0.0")
