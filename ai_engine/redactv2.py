@@ -36,7 +36,7 @@ def extract_json(response_text):
     try:
         json_data = json.loads(response_text)
         return json_data
-    except json.JSONDecodeError:
+    except Exception:
         json_pattern = re.search(
             r"```(JSON|json)?\s*(.*?)```", response_text, re.DOTALL
         )
