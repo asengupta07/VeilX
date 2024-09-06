@@ -329,6 +329,60 @@ def redactv2(input_pdf, sensitive_data, output_pdf, level):
     logging.info(f"Redacted PDF saved as {output_pdf}")
 
 
+def annotate_sensitive_data_in_pdf(pdf_doc, sensitive_data):
+    """
+    Annotates sensitive data in a PDF without redacting it. Adds a highlight annotation to sensitive content.
+    
+    :param pdf_doc: A fitz Document object representing the PDF.
+    :param sensitive_data: A list of sensitive data objects with start, end, text, and type.
+    """
+    for page_num in range(pdf_doc.page_count):
+        page = pdf_doc[page_num]
+        page_text = page.get_text()
+
+        for entity in sensitive_data:
+            entity_text = entity['text']
+            entity_type = entity['type']
+
+            # Find all instances of the sensitive data in the page's text
+            instances = page.search_for(entity_text)
+            for inst in instances:
+                # Log the annotation
+                logging.info(f"Annotating '{entity_text}' as {entity_type} on page {page_num + 1}")
+                
+                # Add a highlight annotation to the sensitive data
+                highlight = page.add_highlight_annot(inst)
+
+                # Optionally, you can add a popup note to explain the annotation
+                highlight.set_info(
+                    title="Sensitive Data",
+                    content=f"Type: {entity_type}\nText: {entity_text}"
+                )
+
+def save_annotated_pdf(pdf_doc, output_path):
+    """
+    Saves the annotated PDF to the specified path.
+    
+    :param pdf_doc: A fitz Document object representing the PDF.
+    :param output_path: The file path where the annotated PDF will be saved.
+    """
+    pdf_doc.save(output_path, garbage=4, deflate=True, clean=True)
+    pdf_doc.close()
+
+def annotate_pdf(input_pdf, sensitive_data, output_pdf):
+    """
+    Annotates a PDF by highlighting sensitive data without redacting it.
+    
+    :param input_pdf: The file path of the input PDF.
+    :param sensitive_data: A list of sensitive data objects with start, end, text, and type.
+    :param output_pdf: The file path where the annotated PDF will be saved.
+    """
+    text, pdf_doc = extract_text_from_pdf(input_pdf)
+    annotate_sensitive_data_in_pdf(pdf_doc, sensitive_data)
+    save_annotated_pdf(pdf_doc, output_pdf)
+    logging.info(f"Annotated PDF saved as {output_pdf}")
+
+
 # if __name__ == "__main__":
 #     input_pdf = "input5.pdf"
 #     output_pdf = "output5.pdf"
