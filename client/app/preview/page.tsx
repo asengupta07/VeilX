@@ -21,6 +21,8 @@ import { storage } from "@/lib/firebase";
 import { useAuth } from "../contexts/authContext";
 
 export default function DocumentPreviewPage() {
+  const { email } = useAuth();
+  console.log(email);
   const { distributeReward, address } = useStateContext();
   const [originalFileUrl, setOriginalFileUrl] = useState<string | null>(null);
   const [redactedFileUrl, setRedactedFileUrl] = useState<string | null>(null);
@@ -51,7 +53,6 @@ export default function DocumentPreviewPage() {
   };
 
   const handleStoreInDatabase = async () => {
-    const { email } = useAuth();
     const rand = (Math.random() * 0.09 + 0.01).toFixed(2); // Random amount between 0.01 and 0.1
 
     if (redactedFileUrl) {

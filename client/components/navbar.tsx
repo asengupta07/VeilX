@@ -25,6 +25,13 @@ export default function Component() {
   const { token, username, logout } = useAuth();
   const { theme } = useTheme();
 
+  const navLinks = [
+    { name: "About Us", route: "/about" },
+    { name: "How to Use", route: "/how-to-use" },
+    { name: "Features", route: "/features" },
+    { name: "Marketplace", route: "/marketplace" },
+  ];
+
   return (
     <nav
       className={`${
@@ -42,19 +49,24 @@ export default function Component() {
           />
         </Link>
         <div className="hidden md:flex items-center space-x-6 mr-auto ml-8">
-          {[
-            { name: "About Us", route: "/about" },
-            { name: "How to Use", route: "/how-to-use" },
-            { name: "Features", route: "/features" },
-            { name: "Marketplace", route: "/marketplace" },
-          ].map(({ name, route }) => (
+          {navLinks.map(({ name, route }) => (
             <Link
               key={name}
               href={route}
-              className="relative text-gray-800 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-300"
+              className={`relative transition-colors duration-300 ${
+                pathname === route
+                  ? "text-purple-600 dark:text-purple-400"
+                  : "text-gray-800 dark:text-white hover:text-purple-600 dark:hover:text-purple-400"
+              }`}
             >
               {name}
-              <span className="absolute left-0 bottom-0 w-full h-0.5 bg-purple-600 dark:bg-purple-400 transform scale-x-0 transition-transform duration-300 origin-left hover:scale-x-100" />
+              <span
+                className={`absolute left-0 bottom-0 w-full h-0.5 bg-purple-600 dark:bg-purple-400 transform transition-transform duration-300 origin-left ${
+                  pathname === route
+                    ? "scale-x-100"
+                    : "scale-x-0 hover:scale-x-100"
+                }`}
+              />
             </Link>
           ))}
         </div>
