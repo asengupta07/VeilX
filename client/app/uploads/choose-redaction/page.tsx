@@ -15,7 +15,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 
 interface RedactionOption {
   id: string;
@@ -28,7 +27,6 @@ export default function ChooseRedactionPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const fetchOptions = async () => {

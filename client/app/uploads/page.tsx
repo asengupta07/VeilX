@@ -51,7 +51,7 @@ export default function PurpleUploadPage() {
     formData.append("file", file);
     formData.append("fileType", fileType);
     formData.append("redactionDegree", redactionDegree.toString());
-    const slug = fileType === "pdf" ? "redaction" : "redactimg";
+    const slug = fileType === "pdf" ? "sensitive" : "redactimg";
 
     try {
       const response = await axios.post(
@@ -66,16 +66,26 @@ export default function PurpleUploadPage() {
       );
 
       const contentType = response.headers["content-type"];
-      if (contentType && (contentType.includes("application/pdf") || contentType.startsWith("image/"))) {
+      if (
+        contentType &&
+        (contentType.includes("application/pdf") ||
+          contentType.startsWith("image/"))
+      ) {
         const originalBlob = new Blob([file], { type: file.type });
         const redactedBlob = new Blob([response.data], { type: contentType });
         const originalUrl = URL.createObjectURL(originalBlob);
         const redactedUrl = URL.createObjectURL(redactedBlob);
 
         // Redirect to the preview page with the file URLs
-        router.push(`/preview?original=${encodeURIComponent(originalUrl)}&redacted=${encodeURIComponent(redactedUrl)}`);
+        router.push(
+          `/preview?original=${encodeURIComponent(
+            originalUrl
+          )}&redacted=${encodeURIComponent(redactedUrl)}`
+        );
       } else {
-        throw new Error(`Received response is not a PDF or image file. Content type: ${contentType}`);
+        throw new Error(
+          `Received response is not a PDF or image file. Content type: ${contentType}`
+        );
       }
     } catch (error) {
       console.error("There was an error processing the file!", error);
@@ -84,7 +94,7 @@ export default function PurpleUploadPage() {
       );
     } finally {
       setIsLoading(false);
-    }
+    }.
   };
 
   return (

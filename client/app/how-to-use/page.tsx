@@ -58,7 +58,7 @@ export default function Component() {
       ),
     },
     {
-      title: "Sell Your Document in the Marketplace",
+      title: "Consent to store in a secure database",
       description:
         "Monetize your redacted documents by listing them in our marketplace and earning tokens when they are sold.",
       videoUrl: "/placeholder.svg?height=180&width=320",
