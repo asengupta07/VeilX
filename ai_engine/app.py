@@ -1,13 +1,65 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 from redact import redact
 from img_redact import redactImg
+from redactv2 import get_sensitive, redactv2
 import os
 import shutil
 
 app = Flask(__name__)
 
 CORS(app)
+
+@app.route('/redactv2', methods=['POST'])
+def rv2():
+    data = request.json
+    sensitive = data['sensitive']
+    doc = data['doc']
+
+    in_path = f"temp/{doc}"
+    out_path = f"temp/redacted_{doc}"
+    sens = []
+    for sen in sensitive:
+        tup = (sen['text'], sen['start'], sen['end'], sen['type'])
+        sens.append(tup)
+
+    redactv2(in_path, sens, out_path)
+
+    resp = send_file(out_path, as_attachment=True, download_name=f"redacted_{doc}")
+
+    clear_temp_folder()
+
+    return resp
+
+
+@app.route('/sensitive', methods=['POST'])
+def sens():
+    if "file" not in request.files:
+        return "No file part", 400
+    
+    doc = request.files["file"]
+
+    if doc.filename == "":
+        return "No selected file", 400
+    in_path = f"temp/{doc.filename}"
+
+    doc.save(in_path)
+
+    sensitive =  get_sensitive(in_path)
+    resp = []
+    for sens in sensitive:
+        li = {}
+        li['text'] = sens[0]
+        li['start'] = sens[1]
+        li['end'] = sens[2]
+        li['type'] = sens[3]
+        resp.append(li)
+
+    return jsonify({
+        'doc': doc.filename,
+        'sensitive': resp
+    })
+
 
 def clear_temp_folder():
     """Remove all files in the temp directory."""
