@@ -2,7 +2,7 @@ from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 from redact import redact
 from img_redact import redactImg
-from redactv2 import get_sensitive, redactv2, annotate_pdf
+from redactv2 import get_sensitive, redactv2, annotate_pdf, get_custom_sensitive_data, custom_redactv2
 import os
 import shutil
 
@@ -31,15 +31,12 @@ def rv2():
     return resp
 
 
-@app.route("/custom", methods=["GET"])
-def custom():
+@app.route("/customsens", methods=["POST"])
+def customsens():
     if "file" not in request.files:
         return "No file part", 400
     
-    image = True if int(request.files["image"]) == 1 else False
-    prompt = True if int(request.files["image"]) == 1 else False
-    
-    
+    prompt = request.form['prompt']
 
     doc = request.files["file"]
 
@@ -51,7 +48,7 @@ def custom():
 
     doc.save(in_path)
 
-    sensitive = get_sensitive(in_path)
+    sensitive = get_custom_sensitive_data(in_path, prompt)
     resp = []
     for sens in sensitive:
         li = {}
@@ -70,6 +67,30 @@ def custom():
         'sensitive': resp,
         'annotated_pdf': f"/download_annotated/{doc.filename}"
     })
+
+
+@app.route('/customrv2', methods=['POST'])
+def customrv2():
+    data = request.json
+    sensitive = data['sensitive']
+    doc = data['doc']
+
+    image = True if int(data["image"]) == 1 else False
+
+    in_path = f"temp/{doc}"
+    out_path = f"temp/redacted_{doc}"
+    sens = []
+    for sen in sensitive:
+        tup = (sen['text'], sen['start'], sen['end'], sen['type'])
+        sens.append(tup)
+
+    redactv2(in_path, sens, out_path, image)
+
+    resp = send_file(out_path, as_attachment=True, download_name=f"redacted_{doc}")
+
+    clear_temp_folder()
+
+    return resp
 
 
 @app.route('/sensitive', methods=['POST'])
