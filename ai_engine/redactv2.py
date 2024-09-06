@@ -343,7 +343,7 @@ def get_custom_sensitive_data(text, user_prompt):
             end = start + len(item_text)
             sensitive_data.append((item_text, start, end, entity["type"]))
             start = end
-            
+
     for data in sensitive_data:
         logging.debug(f"Identified sensitive data: {data}")
 
@@ -380,8 +380,18 @@ def get_sensitive(input_pdf, level):
 
 def get_sensitive_custom(input_pdf, prompt):
     text, pdf_doc = extract_text_from_pdf(input_pdf)
-    sensitive_data = find_custom_sensitive_data(text, prompt)
+    sensitive_data = get_custom_sensitive_data(text, prompt)
     return sensitive_data
+
+def custom_redactv2(input_pdf, sensitive_data, output_pdf, image):
+    text, pdf_doc = extract_text_from_pdf(input_pdf)
+    level = 4 if image else 1
+    redact_text_in_pdf(pdf_doc, sensitive_data, level)
+    if image:
+        redact_images_in_pdf(pdf_doc)
+    save_redacted_pdf(pdf_doc, output_pdf)
+    logging.info(f"Redacted PDF saved as {output_pdf}")
+
 
 def redactv2(input_pdf, sensitive_data, output_pdf, level):
     text, pdf_doc = extract_text_from_pdf(input_pdf)
