@@ -14,6 +14,7 @@ def rv2():
     data = request.json
     sensitive = data['sensitive']
     doc = data['doc']
+    level = data['level']
 
     in_path = f"temp/{doc}"
     out_path = f"temp/redacted_{doc}"
@@ -22,7 +23,7 @@ def rv2():
         tup = (sen['text'], sen['start'], sen['end'], sen['type'])
         sens.append(tup)
 
-    redactv2(in_path, sens, out_path)
+    redactv2(in_path, sens, out_path, level)
 
     resp = send_file(out_path, as_attachment=True, download_name=f"redacted_{doc}")
 
@@ -99,6 +100,7 @@ def sens():
         return "No file part", 400
     
     doc = request.files["file"]
+    level = request.form['level']
 
     if doc.filename == "":
         return "No selected file", 400
@@ -109,7 +111,7 @@ def sens():
     doc.save(in_path)
 
     # Get sensitive data
-    sensitive = get_sensitive(in_path)
+    sensitive = get_sensitive(in_path, level)
     resp = []
     for sens in sensitive:
         li = {}
