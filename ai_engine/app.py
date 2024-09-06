@@ -85,7 +85,7 @@ def customrv2():
         tup = (sen['text'], sen['start'], sen['end'], sen['type'])
         sens.append(tup)
 
-    redactv2(in_path, sens, out_path, image)
+    custom_redactv2(in_path, sens, out_path, image)
 
     resp = send_file(out_path, as_attachment=True, download_name=f"redacted_{doc}")
 
