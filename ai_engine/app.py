@@ -31,6 +31,47 @@ def rv2():
     return resp
 
 
+@app.route("/custom", methods=["GET"])
+def custom():
+    if "file" not in request.files:
+        return "No file part", 400
+    
+    image = True if int(request.files["image"]) == 1 else False
+    prompt = True if int(request.files["image"]) == 1 else False
+    
+    
+
+    doc = request.files["file"]
+
+    if doc.filename == "":
+        return "No selected file", 400
+    
+    in_path = f"temp/{doc.filename}"
+    annotated_path = f"temp/annotated_{doc.filename}"
+
+    doc.save(in_path)
+
+    sensitive = get_sensitive(in_path)
+    resp = []
+    for sens in sensitive:
+        li = {}
+        li['text'] = sens[0]
+        li['start'] = sens[1]
+        li['end'] = sens[2]
+        li['type'] = sens[3]
+        resp.append(li)
+    
+    # Annotate the PDF with sensitive information
+    annotate_pdf(in_path, sensitive, annotated_path)
+
+    # Return both the annotated PDF and JSON response
+    return jsonify({
+        'doc': doc.filename,
+        'sensitive': resp,
+        'annotated_pdf': f"/download_annotated/{doc.filename}"
+    })
+
+
 @app.route('/sensitive', methods=['POST'])
 def sens():
     if "file" not in request.files:
@@ -109,6 +150,7 @@ def redaction():
     clear_temp_folder()
 
     return resp
+
 
 
 @app.route("/redactimg", methods=["POST"])

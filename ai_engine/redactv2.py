@@ -292,6 +292,63 @@ def redact_text_in_pdf(pdf_doc, sensitive_data, level):
         else:
             page.apply_redactions()
 
+def get_custom_sensitive_data(text, user_prompt):
+    # Customize the prompt based on the user input
+    prompt = (
+        "You are a powerful text analysis tool. "
+        "Please analyze the following text based on the user's custom prompt:\n\n"
+        f"User Prompt: {user_prompt}\n\n"
+        "Identify and flag all items that match the user's criteria. Be robust but do not deviate from the user's prompt. Return them in the following JSON format:\n\n"
+        "[\n"
+        "    {\n"
+        "        \"type\": \"Custom\",\n"
+        "        \"text\": \"Example data\"\n"
+        "    }\n"
+        "    // Add ALL identified items\n"
+        "]\n\n"
+        f"Text to analyze:\n{text}"
+    )
+
+    try:
+        # Use get_gemini_response to make the request and get a response
+        gemini_response = get_gemini_response(prompt)
+        if gemini_response:
+            print(gemini_response)  # Debugging print statement
+            try:
+                entities = json.loads(gemini_response)  # Parsing the JSON response
+            except json.JSONDecodeError:
+                logging.error("Error: Unable to parse JSON response from Gemini API")
+                return []
+        else:
+            logging.error("Error: No response from Gemini API")
+            return []
+    except Exception as e:
+        logging.error(f"Error in Gemini API call: {e}")
+        return []
+
+    sensitive_data = []
+    for entity in entities:
+        item_text = entity['text']
+        if len(item_text) <= 1:  # Skip single characters
+            logging.warning(f"Skipping single character: {item_text}")
+            continue
+        if item_text.lower() in ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for']:  # Skip common words
+            logging.warning(f"Skipping common word: {item_text}")
+            continue
+        start = 0
+        while True:
+            start = text.find(item_text, start)
+            if start == -1:
+                break
+            end = start + len(item_text)
+            sensitive_data.append((item_text, start, end, entity["type"]))
+            start = end
+            
+    for data in sensitive_data:
+        logging.debug(f"Identified sensitive data: {data}")
+
+    return sensitive_data
+
 
 def redact_images_in_pdf(pdf_doc):
     for page_num in range(pdf_doc.page_count):
@@ -320,6 +377,12 @@ def get_sensitive(input_pdf, level):
     return sensitive_data
 
 
+
+def get_sensitive_custom(input_pdf, prompt):
+    text, pdf_doc = extract_text_from_pdf(input_pdf)
+    sensitive_data = find_custom_sensitive_data(text, prompt)
+    return sensitive_data
+
 def redactv2(input_pdf, sensitive_data, output_pdf, level):
     text, pdf_doc = extract_text_from_pdf(input_pdf)
     redact_text_in_pdf(pdf_doc, sensitive_data, level)
@@ -330,12 +393,6 @@ def redactv2(input_pdf, sensitive_data, output_pdf, level):
 
 
 def annotate_sensitive_data_in_pdf(pdf_doc, sensitive_data):
-    """
-    Annotates sensitive data in a PDF without redacting it. Adds a highlight annotation to sensitive content.
-    
-    :param pdf_doc: A fitz Document object representing the PDF.
-    :param sensitive_data: A list of sensitive data objects with start, end, text, and type.
-    """
     for page_num in range(pdf_doc.page_count):
         page = pdf_doc[page_num]
         page_text = page.get_text()
@@ -360,23 +417,10 @@ def annotate_sensitive_data_in_pdf(pdf_doc, sensitive_data):
                 )
 
 def save_annotated_pdf(pdf_doc, output_path):
-    """
-    Saves the annotated PDF to the specified path.
-    
-    :param pdf_doc: A fitz Document object representing the PDF.
-    :param output_path: The file path where the annotated PDF will be saved.
-    """
     pdf_doc.save(output_path, garbage=4, deflate=True, clean=True)
     pdf_doc.close()
 
 def annotate_pdf(input_pdf, sensitive_data, output_pdf):
-    """
-    Annotates a PDF by highlighting sensitive data without redacting it.
-    
-    :param input_pdf: The file path of the input PDF.
-    :param sensitive_data: A list of sensitive data objects with start, end, text, and type.
-    :param output_pdf: The file path where the annotated PDF will be saved.
-    """
     text, pdf_doc = extract_text_from_pdf(input_pdf)
     annotate_sensitive_data_in_pdf(pdf_doc, sensitive_data)
     save_annotated_pdf(pdf_doc, output_pdf)
