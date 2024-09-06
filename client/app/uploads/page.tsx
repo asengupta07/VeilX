@@ -47,6 +47,7 @@ export default function PurpleUploadPage() {
     }
     setIsLoading(true);
     setError(null);
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("fileType", fileType);
@@ -61,30 +62,24 @@ export default function PurpleUploadPage() {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-          responseType: "blob",
         }
       );
 
       const contentType = response.headers["content-type"];
-      if (
-        contentType &&
-        (contentType.includes("application/pdf") ||
-          contentType.startsWith("image/"))
-      ) {
+      if (contentType && contentType.includes("application/json")) {
+        const jsonData = JSON.stringify(response.data);
         const originalBlob = new Blob([file], { type: file.type });
-        const redactedBlob = new Blob([response.data], { type: contentType });
         const originalUrl = URL.createObjectURL(originalBlob);
-        const redactedUrl = URL.createObjectURL(redactedBlob);
 
-        // Redirect to the preview page with the file URLs
-        router.push(
-          `/preview?original=${encodeURIComponent(
-            originalUrl
-          )}&redacted=${encodeURIComponent(redactedUrl)}`
-        );
+        // Store data in localStorage
+        localStorage.setItem("originalFileUrl", originalUrl);
+        localStorage.setItem("jsonData", jsonData);
+
+        // Navigate to the next page without passing data via URL
+        router.push(`/uploads/choose-redaction`);
       } else {
         throw new Error(
-          `Received response is not a PDF or image file. Content type: ${contentType}`
+          `Received response is not a valid JSON. Content type: ${contentType}`
         );
       }
     } catch (error) {
@@ -94,7 +89,7 @@ export default function PurpleUploadPage() {
       );
     } finally {
       setIsLoading(false);
-    }.
+    }
   };
 
   return (

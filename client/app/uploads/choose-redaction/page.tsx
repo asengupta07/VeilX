@@ -16,9 +16,17 @@ import { Label } from "@/components/ui/label";
 import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 import { useRouter } from "next/navigation";
 
+interface SensitiveInfo {
+  end: number;
+  start: number;
+  text: string;
+  type: string;
+}
+
 interface RedactionOption {
   id: string;
   label: string;
+  text: string;
 }
 
 export default function ChooseRedactionPage() {
@@ -26,20 +34,41 @@ export default function ChooseRedactionPage() {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [originalFileUrl, setOriginalFileUrl] = useState<string | null>(null);
+  const [jsonData, setJsonData] = useState<{
+    doc: string;
+    sensitive: SensitiveInfo[];
+  } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const fetchOptions = async () => {
+    const storedOriginalUrl = localStorage.getItem("originalFileUrl");
+    const storedJsonData = localStorage.getItem("jsonData");
+
+    if (storedOriginalUrl) {
+      setOriginalFileUrl(storedOriginalUrl);
+    }
+
+    if (storedJsonData) {
       try {
-        const response = await axios.get("/api/redactv2");
-        setOptions(response.data);
+        // Parse the JSON
+        const parsedData = JSON.parse(storedJsonData);
+        setJsonData(parsedData);
+
+        // Generate redaction options based on unique types in sensitive data
+        const redactionOptions: RedactionOption[] = parsedData.sensitive.map(
+          (item: { type: any; text: any }, index: any) => ({
+            id: `option-${index}`,
+            label: item.type,
+            text: item.text,
+          })
+        );
+        setOptions(redactionOptions);
       } catch (error) {
-        console.error("Error fetching redaction options:", error);
+        console.error("Error decoding or parsing JSON data:", error);
         setError("Failed to load redaction options. Please try again.");
       }
-    };
-
-    fetchOptions();
+    }
   }, []);
 
   const handleOptionToggle = (optionId: string) => {
@@ -60,13 +89,43 @@ export default function ChooseRedactionPage() {
     setError(null);
 
     try {
-      const response = await axios.post("/api/apply-redaction", {
-        redactionOptions: selectedOptions,
-      });
+      const selectedTypes = selectedOptions.map(
+        (optionId) => options.find((option) => option.id === optionId)?.label
+      );
 
-      console.log(response.data);
+      const filteredSensitiveInfo = jsonData?.sensitive.filter((item) =>
+        selectedTypes.includes(item.type)
+      );
 
-      router.push("/redaction-success");
+      const response = await axios.post(
+        "http://127.0.0.1:5000/redactv2",
+        {
+          doc: jsonData?.doc,
+          sensitive: filteredSensitiveInfo,
+        },
+        {
+          responseType: "blob",
+        }
+      );
+
+      const contentType = response.headers["content-type"];
+      const redactedBlob = new Blob([response.data], { type: contentType });
+
+      if (originalFileUrl) {
+        const originalBlob = await fetch(originalFileUrl).then((res) =>
+          res.blob()
+        );
+
+        const originalBlobUrl = URL.createObjectURL(originalBlob);
+        const redactedBlobUrl = URL.createObjectURL(redactedBlob);
+
+        // Navigate to the preview page with original and redacted file URLs
+        router.push(
+          `/preview?original=${encodeURIComponent(
+            originalBlobUrl
+          )}&redacted=${encodeURIComponent(redactedBlobUrl)}`
+        );
+      }
     } catch (error) {
       console.error("Error applying redaction:", error);
       setError("An error occurred while applying redaction. Please try again.");
@@ -87,6 +146,23 @@ export default function ChooseRedactionPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {originalFileUrl && (
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold mb-2">Original File:</h3>
+              {originalFileUrl.includes("image") ? (
+                <img
+                  src={originalFileUrl}
+                  alt="Original file"
+                  className="max-w-full h-auto"
+                />
+              ) : (
+                <iframe
+                  src={originalFileUrl}
+                  className="w-full h-64 border-2 border-purple-500"
+                ></iframe>
+              )}
+            </div>
+          )}
           <AnimatePresence mode="wait">
             <motion.form
               initial={{ opacity: 0, y: 20 }}
@@ -113,7 +189,7 @@ export default function ChooseRedactionPage() {
                     htmlFor={option.id}
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300"
                   >
-                    {option.label}
+                    {option.label}: {option.text}
                   </Label>
                 </motion.div>
               ))}
