@@ -1,5 +1,5 @@
 easyocr
-pyMuPDF
+PyMuPDF
 Flask
 Flask_Cors
 numpy
@@ -8,8 +8,6 @@ opencv_python_headless
 Pillow
 protobuf
 pytesseract
-Requests
-torch
-ultralytics
-google.generativeai
 python-dotenv
+Requests
+ultralytics
