@@ -14,7 +14,8 @@ def rv2():
     data = request.json
     sensitive = data['sensitive']
     doc = data['doc']
-    level = data['level']
+    print(type(data['level']))
+    level = int(data['level'])
 
     in_path = f"temp/{doc}"
     out_path = f"temp/redacted_{doc}"
@@ -100,7 +101,7 @@ def sens():
         return "No file part", 400
     
     doc = request.files["file"]
-    level = request.form['level']
+    level = int(request.form['level'])
 
     if doc.filename == "":
         return "No selected file", 400

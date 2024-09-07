@@ -51,7 +51,7 @@ export default function PurpleUploadPage() {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("fileType", fileType);
-    formData.append("redactionDegree", redactionDegree.toString());
+    formData.append("level", redactionDegree.toString());
     const slug = fileType === "pdf" ? "sensitive" : "redactimg";
 
     try {
@@ -76,7 +76,7 @@ export default function PurpleUploadPage() {
         localStorage.setItem("jsonData", jsonData);
 
         // Navigate to the next page without passing data via URL
-        router.push(`/uploads/choose-redaction`);
+        router.push(`/uploads/choose-redaction?level=${redactionDegree}`);
       } else {
         throw new Error(
           `Received response is not a valid JSON. Content type: ${contentType}`

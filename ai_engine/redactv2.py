@@ -80,10 +80,11 @@ def get_gemini_response(prompt):
 
 
 def find_sensitive_data(text, level):
+    # print("Level: ", level, level==1, type(level), int(level)==1)
     if level == 1 or level == 2:
         prompt = (
             "You are a powerful text analysis tool designed to identify all important and sensitive numbers in text. "
-            "Please analyze the following text and flag ALL instances of the following types of numbers:\n\n"
+            "Please analyze the following text and flag any instances of personally identifiable numbers including but not limited to the following types of numbers:\n\n"
             "1. Aadhaar Numbers: Detect any mention of Aadhaar numbers.\n"
             "2. PAN Numbers: Identify any PAN (Permanent Account Number) in the text.\n"
             "3. Passport Numbers: Flag any references to passport numbers.\n"
@@ -91,7 +92,8 @@ def find_sensitive_data(text, level):
             "5. Employee ID Numbers: Detect any employee ID numbers.\n"
             "6. Bank Account Numbers: Identify any bank account numbers.\n"
             "7. Credit/Debit Card Numbers: Flag any credit or debit card numbers.\n"
-            "8. Other Identification Numbers: Detect any other sensitive identification numbers that could be used to identify an individual or entity.\n\n"
+            "8. Roll Numbers/Registration Numbers: Flag any roll numbers or registration numbers.\n"
+            "9. Other Identification Numbers: Detect any other sensitive identification numbers that could be used to identify an individual or entity.\n\n"
             "Please list each identified number in the following JSON format:\n\n"
             "[\n"
             "    {\n"
@@ -105,11 +107,11 @@ def find_sensitive_data(text, level):
             "    // Add ALL identified items\n"
             "]\n\n"
             "Err on the side of caution - if in doubt, include it. However, do not flag single digits or common numeric sequences unless they are part of a sensitive number. Be very thorough and take into account cultural variations such as Indian identification numbers, etc."
-            "Provide your comprehensive analysis based on these instructions. Only return the JSON.\n\n"
+            "Provide your comprehensive analysis based on these instructions. Only return the JSON. If at all no item is found, return an empty list.\n\n"
             f"Text to analyze:\n{text}"
         )
 
-    if level == 3:
+    elif level == 3:
         prompt = (
             "You are a highly advanced text analysis tool with the capability to detect and flag all instances of names and numbers within a text. Your task is to comprehensively analyze the text provided and identify every occurrence of any name or number, regardless of its format, context, or cultural origin. This includes but is not limited to the following categories:\n\n"
             "1. **Personal Identification Numbers**: Capture any numbers that could serve as personal identifiers, such as Aadhaar numbers, PAN numbers, Social Security numbers, National ID numbers, and others. Include associated names if present.\n"
@@ -201,6 +203,7 @@ def find_sensitive_data(text, level):
 
     if entities is None:
         logging.info("Falling back to Gemini Pro API")
+        print("prompt: ", prompt)
         gemini_response = get_gemini_response(prompt)
         print(gemini_response)
         if gemini_response:
@@ -247,7 +250,7 @@ def find_sensitive_data(text, level):
     url_pattern = re.compile(
         r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
     )
-    identifier_pattern = re.compile(r"\b(?:[A-Z0-9]{8,}|[A-Z]{2,}\d+|\d+[A-Z]{2,})\b")
+    identifier_pattern = re.compile(r"\b(?:(?:\d{6,})|(?=.*\d)(?=.*[A-Z])[A-Z\d]{8,})\b")
 
     for match in url_pattern.finditer(text):
         sensitive_data.append((match.group(), match.start(), match.end(), "URL"))
@@ -287,7 +290,7 @@ def redact_text_in_pdf(pdf_doc, sensitive_data, level):
                     page.add_redact_annot(word_inst, fill=(1, 1, 1))
 
         # Apply redactions for this page
-        if level < 3:
+        if level < 2:
             page.apply_redactions(images=0, graphics=0)
         else:
             page.apply_redactions()
@@ -394,6 +397,7 @@ def custom_redactv2(input_pdf, sensitive_data, output_pdf, image):
 
 
 def redactv2(input_pdf, sensitive_data, output_pdf, level):
+    
     text, pdf_doc = extract_text_from_pdf(input_pdf)
     redact_text_in_pdf(pdf_doc, sensitive_data, level)
     if level < 2:
@@ -408,8 +412,8 @@ def annotate_sensitive_data_in_pdf(pdf_doc, sensitive_data):
         page_text = page.get_text()
 
         for entity in sensitive_data:
-            entity_text = entity['text']
-            entity_type = entity['type']
+            entity_text = entity[0]
+            entity_type = entity[3]
 
             # Find all instances of the sensitive data in the page's text
             instances = page.search_for(entity_text)
