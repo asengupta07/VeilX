@@ -1,101 +1,114 @@
-'use client'
-
-import { useState } from "react"
-import axios from "axios"
-import { motion, AnimatePresence } from "framer-motion"
+"use client";
+import React, { useState } from "react";
+import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import { TextHoverEffect } from "@/components/ui/text-hover-effect"
-import { FileUpload } from "@/components/ui/file-upload"
-import { useRouter } from "next/navigation"
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { TextHoverEffect } from "@/components/ui/text-hover-effect";
+import { FileUpload } from "@/components/ui/file-upload";
+import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
 
 export default function PurpleUploadPage() {
-  const [file, setFile] = useState<File | null>(null)
-  const [fileType, setFileType] = useState<string>("")
-  const [redactionDegree, setRedactionDegree] = useState<number>(1)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
+  const [file, setFile] = useState<File | null>(null); // Updated to File | null
+  const [fileType, setFileType] = useState<string>(""); // Explicit string type
+  const [redactionDegree, setRedactionDegree] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null); // Updated to string | null
+  const [customPrompt, setCustomPrompt] = useState<string>(""); // Explicit string type
+  const [redactionMode, setRedactionMode] = useState("level"); // 'level' or 'custom'
+  const router = useRouter();
 
   const redactionDescriptions = [
     "Level 1: Basic redaction - Removes URLs, IDs and numerical personal information.",
     "Level 2: Moderate redaction - Removes URLs, IDs, numerical information and images.",
     "Level 3: High redaction - Removes all personal and sensitive data, including contextual information.",
     "Level 4: Maximum redaction - Removes all but essential information, leaving only the core message.",
-  ]
+  ];
 
   const handleFileChange = (files: File[]) => {
     if (files.length > 0) {
-      setFile(files[0])
-      setError(null)
+      setFile(files[0]);
+      setError(null);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    // Added React.FormEvent type
+    e.preventDefault();
     if (!file) {
-      setError("Please select a file to upload.")
-      return
+      setError("Please select a file to upload.");
+      return;
     }
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
 
-    const formData = new FormData()
-    formData.append("file", file)
-    formData.append("fileType", fileType)
-    formData.append("level", redactionDegree.toString())
-    const slug = fileType === "pdf" ? "sensitive" : "redactimg"
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("fileType", fileType);
 
+    let response;
     try {
-      const response = await axios.post(
-        `http://127.0.0.1:5000/${slug}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      )
+      if (redactionMode === "level") {
+        formData.append("level", redactionDegree.toString());
+        const slug = fileType === "pdf" ? "sensitive" : "redactimg";
+        response = await axios.post(`http://127.0.0.1:5000/${slug}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        formData.append("prompt", customPrompt);
+        response = await axios.post(
+          "http://127.0.0.1:5000/customsens",
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
+      }
 
-      const contentType = response.headers["content-type"]
+      const contentType = response.headers["content-type"];
       if (contentType && contentType.includes("application/json")) {
-        const jsonData = JSON.stringify(response.data)
-        const originalBlob = new Blob([file], { type: file.type })
-        const originalUrl = URL.createObjectURL(originalBlob)
+        const jsonData = JSON.stringify(response.data);
+        const originalBlob = new Blob([file], { type: file.type }); // file has type File | null, so `file?.type` is safer
+        const originalUrl = URL.createObjectURL(originalBlob);
 
-        localStorage.setItem("originalFileUrl", originalUrl)
-        localStorage.setItem("jsonData", jsonData)
+        localStorage.setItem("originalFileUrl", originalUrl);
+        localStorage.setItem("jsonData", jsonData);
 
-        router.push(`/uploads/choose-redaction?level=${redactionDegree}`)
+        if (redactionMode === "level") {
+          router.push(`/uploads/choose-redaction?level=${redactionDegree}`);
+        } else {
+          router.push(`/preview?original=${encodeURIComponent(originalUrl)}`); // Assuming customPrompt holds sensitive data in JSON format
+        }
       } else {
         throw new Error(
           `Received response is not a valid JSON. Content type: ${contentType}`
-        )
+        );
       }
     } catch (error) {
-      console.error("There was an error processing the file!", error)
+      console.error("There was an error processing the file!", error);
       setError(
         "An error occurred while processing the file. Please try again."
-      )
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="h-screen flex items-center justify-center">
@@ -154,65 +167,95 @@ export default function PurpleUploadPage() {
                 transition={{ delay: 0.3 }}
                 className="space-y-2"
               >
-                <Label htmlFor="redaction-degree" className="text-purple-700">
-                  Degree of Redaction (1-4)
+                <Label htmlFor="redaction-mode" className="text-purple-700">
+                  Redaction Mode
                 </Label>
-                <Slider
-                  id="redaction-degree"
-                  min={1}
-                  max={4}
-                  step={1}
-                  value={[redactionDegree]}
-                  onValueChange={(value) => setRedactionDegree(value[0])}
-                  className="py-4"
-                />
-                <div className="text-right text-sm text-purple-600">
-                  Current value: {redactionDegree}
-                </div>
+                <Select onValueChange={setRedactionMode} value={redactionMode}>
+                  <SelectTrigger
+                    id="redaction-mode"
+                    className="bg-white dark:bg-black text-purple-600 border-purple-500 focus:border-purple-500 focus:ring-purple-500"
+                  >
+                    <SelectValue placeholder="Select redaction mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="level">Redaction Level</SelectItem>
+                    <SelectItem value="custom">Custom Redaction</SelectItem>
+                  </SelectContent>
+                </Select>
+              </motion.div>
+              {redactionMode === "level" ? (
                 <motion.div
-                  key={redactionDegree}
-                  initial={{ opacity: 0, y: -10 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  transition={{ duration: 0.2 }}
-                  className="text-sm text-purple-700 mt-2"
+                  transition={{ delay: 0.4 }}
+                  className="space-y-2"
                 >
-                  {redactionDescriptions[redactionDegree - 1]}
+                  <Label htmlFor="redaction-degree" className="text-purple-700">
+                    Degree of Redaction (1-4)
+                  </Label>
+                  <Slider
+                    id="redaction-degree"
+                    min={1}
+                    max={4}
+                    step={1}
+                    value={[redactionDegree]}
+                    onValueChange={(value) => setRedactionDegree(value[0])}
+                    className="w-full"
+                  />
+                  <div className="text-center text-purple-600">
+                    {redactionDescriptions[redactionDegree - 1]}
+                  </div>
                 </motion.div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <Button
-                  type="submit"
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Processing..." : "Upload and Preview"}
-                </Button>
-              </motion.div>
-
-              {error && (
+              ) : (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="text-red-500 text-sm text-center"
+                  className="space-y-2"
+                >
+                  <Label htmlFor="custom-prompt" className="text-purple-700">
+                    Custom Prompt
+                  </Label>
+                  <Input
+                    id="custom-prompt"
+                    placeholder="Enter custom redaction instructions"
+                    value={customPrompt}
+                    onChange={(e) => setCustomPrompt(e.target.value)}
+                  />
+                </motion.div>
+              )}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="text-red-500 text-center"
                 >
                   {error}
                 </motion.div>
               )}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+              >
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  {isLoading ? "Processing..." : "Upload"}
+                </Button>
+              </motion.div>
             </motion.form>
           </AnimatePresence>
         </CardContent>
-        <CardFooter>
-          <p className="text-sm text-purple-600 text-center w-full">
-            Secure file upload powered by VeilX
-          </p>
+        <CardFooter className="text-center">
+          <span className="text-sm text-gray-500">
+            Upload and redact sensitive information securely with VeilX.
+          </span>
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }

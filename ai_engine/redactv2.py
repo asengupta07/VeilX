@@ -25,34 +25,39 @@ genai.configure(api_key=GOOGLE_API_KEY)
 
 def add_transaction_hash_to_pdf(input_pdf, output_pdf):
     doc = fitz.open(input_pdf)
-    
+
     transaction_hash = f"Signed using hash: {hashlib.sha256(str(random.random()).encode()).hexdigest()[:16]}"
-    
+
     for page in doc:
         page_width = page.rect.width
         page_height = page.rect.height
-        
+
         font_size = 8
-        hash_width = fitz.get_text_length(transaction_hash, fontname="helv", fontsize=font_size)
+        hash_width = fitz.get_text_length(
+            transaction_hash, fontname="helv", fontsize=font_size
+        )
         hash_height = font_size
-        
+
         for _ in range(100):
             x = random.uniform(10, page_width - hash_width - 10)
             y = random.uniform(10, page_height - hash_height - 10)
-            
+
             rect = fitz.Rect(x, y, x + hash_width, y + hash_height)
-            
+
             if not page.get_text(clip=rect) and not page.get_image_info(rect):
-                page.insert_text((x, y), transaction_hash, fontsize=font_size, color=(0, 0, 0))
+                page.insert_text(
+                    (x, y), transaction_hash, fontsize=font_size, color=(0, 0, 0)
+                )
                 break
         else:
             print(f"Could not find empty space on page {page.number + 1}")
-    
+
     doc.save(output_pdf)
     doc.close()
 
     print(f"Added transaction hash to PDF. Saved as {output_pdf}")
     return transaction_hash
+
 
 def extract_text_from_pdf(pdf_path):
     doc = fitz.open(pdf_path)
@@ -251,7 +256,7 @@ def find_sensitive_data(text, level):
     sensitive_data = []
     for entity in entities:
         item_text = entity["text"]
-        if len(item_text) <= 1: 
+        if len(item_text) <= 1:
             logging.warning(f"Skipping single character: {item_text}")
             continue
         if item_text.lower() in [
@@ -266,7 +271,7 @@ def find_sensitive_data(text, level):
             "at",
             "to",
             "for",
-        ]:  
+        ]:
             logging.warning(f"Skipping common word: {item_text}")
             continue
         start = 0
@@ -331,27 +336,38 @@ def redact_text_in_pdf(pdf_doc, sensitive_data, level, mode):
 
 def get_custom_sensitive_data(text, user_prompt):
     prompt = (
-        "You are a powerful text analysis tool. "
-        "Please analyze the following text based on the user's custom prompt:\n\n"
+        "You are an advanced, highly adaptable text analysis tool. "
+        "Your task is to analyze the following text based on the user's custom prompt. "
+        "This tool is culturally aware and capable of understanding diverse proper nouns, "
+        "including names, addresses, and unique regional terms from various cultural contexts, such as Indian, East Asian, Middle Eastern, African, and Western names. "
+        "The analysis should be precise, handling subtle differences in syntax and structure common in various languages and dialects. "
+        "Ensure flexibility in recognizing variations in spelling, transliteration, and formatting of culturally specific information.\n\n"
         f"User Prompt: {user_prompt}\n\n"
-        "Identify and flag all items that match the user's criteria. Be robust but do not deviate from the user's prompt. Return them in the following JSON format:\n\n"
+        "Your task is to identify and flag all items that match the user's criteria in a manner that respects regional naming conventions, abbreviations, and format differences. "
+        "Be thorough, and do not deviate from the user's prompt, but ensure the analysis accounts for a wide range of global linguistic patterns and naming conventions.\n\n"
+        "Return all identified items in the following JSON format:\n\n"
         "[\n"
         "    {\n"
-        '        "type": "Custom",\n'
-        '        "text": "Example data"\n'
+        '        "type": "Name",\n'
+        '        "text": "Dupindar Singh"\n'
+        "    },\n"
+        "    {\n"
+        '        "type": "Address",\n'
+        '        "text": "123, M.G. Road, Bengaluru, Karnataka, India"\n'
         "    }\n"
         "    // Add ALL identified items\n"
         "]\n\n"
+        "Ensure that you maintain this exact format at ALL COSTS.\n\n"
         f"Text to analyze:\n{text}"
     )
-
+    print("Prompt: ", prompt)
     try:
         gemini_response = get_gemini_response(prompt)
         if gemini_response:
             print(gemini_response)
             try:
-                entities = json.loads(gemini_response)
-            except json.JSONDecodeError:
+                entities = extract_json(gemini_response)
+            except Exception:
                 logging.error("Error: Unable to parse JSON response from Gemini API")
                 return []
         else:

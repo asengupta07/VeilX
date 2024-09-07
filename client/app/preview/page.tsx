@@ -19,6 +19,7 @@ import { useStateContext } from "../contexts/StateContext";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { useAuth } from "../contexts/authContext";
+import axios from "axios";
 
 export default function DocumentPreviewPage() {
   const { email } = useAuth();
@@ -30,10 +31,39 @@ export default function DocumentPreviewPage() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const originalUrl = searchParams.get("original");
-    const redactedUrl = searchParams.get("redacted");
-    if (originalUrl) setOriginalFileUrl(decodeURIComponent(originalUrl));
-    if (redactedUrl) setRedactedFileUrl(decodeURIComponent(redactedUrl));
+    const fetchUrls = async () => {
+      const originalUrl = searchParams.get("original");
+      const redactedUrl = searchParams.get("redacted");
+
+      if (originalUrl) setOriginalFileUrl(decodeURIComponent(originalUrl));
+      if (redactedUrl) setRedactedFileUrl(decodeURIComponent(redactedUrl));
+      else {
+        const jsonData = localStorage.getItem("jsonData");
+        if (jsonData) {
+          try {
+            const data = JSON.parse(jsonData);
+            const response = await axios.post(
+              "http://127.0.0.1:5000/customrv2",
+              data,
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                responseType: "blob",
+              }
+            );
+
+            const blob = new Blob([response.data], { type: "application/pdf" });
+            const url = URL.createObjectURL(blob);
+            setRedactedFileUrl(url);
+          } catch (error) {
+            console.error("Error fetching redacted file:", error);
+          }
+        }
+      }
+    };
+
+    fetchUrls();
   }, [searchParams]);
 
   const handleStoreOnBlockchain = () => {
@@ -48,6 +78,8 @@ export default function DocumentPreviewPage() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    } else if (localStorage.getItem("jsonData")) {
+      // Handle case when no redacted file URL but jsonData is available
     }
   };
 
@@ -70,60 +102,51 @@ export default function DocumentPreviewPage() {
         });
 
         // Step 4: Prepare the form data for the API call to /addtxn
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("txn", transactionHash);
+        // const formData = new FormData();
+        // formData.append("file", file);
+        // formData.append("txn", transactionHash);
 
-        // Step 5: Make a POST request to the /addtxn API endpoint
-        const apiResponse = await fetch("http://127.0.0.1:5000/addtxn", {
-          method: "POST",
-          body: formData,
+        // // Step 5: Make a POST request to the /addtxn API endpoint
+        // const apiResponse = await fetch("http://127.0.0.1:5000/addtxn", {
+        //   method: "POST",
+        //   body: formData,
+        // });
+
+        // if (apiResponse.ok) {
+        //   const apiData = await apiResponse.json();
+        //   const newFileBlob = await apiData.file.blob();
+
+        //   // Step 6: Create a new File object from the response
+        //   const newFile = new File([newFileBlob], `hash_${file.name}`, {
+        //     type: newFileBlob.type,
+        //   });
+
+        // Step 7: Upload the new file to Firebase Storage
+        const storageRef = ref(storage, `documents/${file.name}${Date.now()}`);
+        const snapshot = await uploadBytes(storageRef, file);
+        const firebaseUrl = await getDownloadURL(snapshot.ref);
+
+        // Step 8: Update the redacted file URL state
+        setRedactedFileUrl(firebaseUrl);
+
+        // Step 9: Save the Firebase URL to the database
+        const dbResponse = await fetch("/api/upload", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email,
+            imageUrl: firebaseUrl,
+            transactionHash: transactionHash,
+          }),
         });
 
-        if (apiResponse.ok) {
-          const apiData = await apiResponse.json();
-          const newFileBlob = await apiData.file.blob();
-
-          // Step 6: Create a new File object from the response
-          const newFile = new File([newFileBlob], `hash_${file.name}`, {
-            type: newFileBlob.type,
-          });
-
-          // Step 7: Upload the new file to Firebase Storage
-          const storageRef = ref(
-            storage,
-            `documents/${newFile.name}${Date.now()}`
-          );
-          const snapshot = await uploadBytes(storageRef, newFile);
-          const firebaseUrl = await getDownloadURL(snapshot.ref);
-
-          // Step 8: Update the redacted file URL state
-          setRedactedFileUrl(firebaseUrl);
-
-          // Step 9: Save the Firebase URL to the database
-          const dbResponse = await fetch("/api/upload", {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email: email,
-              imageUrl: firebaseUrl,
-              transactionHash: transactionHash,
-            }),
-          });
-
-          if (dbResponse.ok) {
-            alert("Document stored successfully!");
-          } else {
-            alert("Failed to store document in the database.");
-          }
+        if (dbResponse.ok) {
+          alert("Document stored successfully!");
         } else {
-          alert("Failed to process the document on the server.");
+          alert("Failed to store document in the database.");
         }
-      } catch (error) {
-        console.error("Error processing document: ", error);
-        alert("Failed to process and store document. Please try again.");
       } finally {
         setLoading(false); // Set loading to false after process ends
       }

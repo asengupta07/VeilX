@@ -2,7 +2,7 @@ from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 from redact import redact
 from img_redact import redactImg
-from redactv2 import get_sensitive, redactv2, annotate_pdf, get_custom_sensitive_data, custom_redactv2, add_transaction_hash_to_pdf
+from redactv2 import get_sensitive, redactv2, annotate_pdf, get_sensitive_custom, custom_redactv2, add_transaction_hash_to_pdf
 import os
 import shutil
 
@@ -88,7 +88,7 @@ def customsens():
 
     doc.save(in_path)
 
-    sensitive = get_custom_sensitive_data(in_path, prompt)
+    sensitive = get_sensitive_custom(in_path, prompt)
     resp = []
     for sens in sensitive:
         li = {}
@@ -97,13 +97,10 @@ def customsens():
         li['end'] = sens[2]
         li['type'] = sens[3]
         resp.append(li)
-    
-    annotate_pdf(in_path, sensitive, annotated_path)
 
     return jsonify({
         'doc': doc.filename,
         'sensitive': resp,
-        'annotated_pdf': f"/download_annotated/{doc.filename}"
     })
 
 
@@ -113,7 +110,8 @@ def customrv2():
     sensitive = data['sensitive']
     doc = data['doc']
 
-    image = True if int(data["image"]) == 1 else False
+    # image = True if int(data["image"]) == 1 else False
+    image = False
 
     in_path = f"temp/{doc}"
     out_path = f"temp/redacted_{doc}"
@@ -122,7 +120,7 @@ def customrv2():
         tup = (sen['text'], sen['start'], sen['end'], sen['type'])
         sens.append(tup)
 
-    custom_redactv2(in_path, sens, out_path, image)
+    custom_redactv2(in_path, sens, out_path, image, mode="black")
 
     resp = send_file(out_path, as_attachment=True, download_name=f"redacted_{doc}")
 
