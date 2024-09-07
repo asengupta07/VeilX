@@ -22,11 +22,11 @@ import { useAuth } from "../contexts/authContext";
 
 export default function DocumentPreviewPage() {
   const { email } = useAuth();
-  console.log(email);
   const { distributeReward, address } = useStateContext();
   const [originalFileUrl, setOriginalFileUrl] = useState<string | null>(null);
   const [redactedFileUrl, setRedactedFileUrl] = useState<string | null>(null);
   const [consentGiven, setConsentGiven] = useState(false);
+  const [loading, setLoading] = useState(false); // New loading state
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -37,7 +37,6 @@ export default function DocumentPreviewPage() {
   }, [searchParams]);
 
   const handleStoreOnBlockchain = () => {
-    // Implement blockchain storage logic here
     console.log("Storing on blockchain...");
   };
 
@@ -53,40 +52,80 @@ export default function DocumentPreviewPage() {
   };
 
   const handleStoreInDatabase = async () => {
+    setLoading(true); // Set loading to true when process starts
     const rand = (Math.random() * 0.09 + 0.01).toFixed(2); // Random amount between 0.01 and 0.1
 
     if (redactedFileUrl) {
       try {
-        const hash = distributeReward(address, rand);
+        // Step 1: Distribute reward and get transaction hash
+        const transactionHash = await distributeReward(address, rand);
 
+        // Step 2: Fetch the redacted file blob from the URL
         const response = await fetch(redactedFileUrl);
         const blob = await response.blob();
 
+        // Step 3: Create a File object to send with the form
         const file = new File([blob], "redacted_document.pdf", {
           type: blob.type,
         });
 
-        // Firebase Storage reference
-        const storageRef = ref(storage, `documents/${file.name}${Date.now()}`);
-        const snapshot = await uploadBytes(storageRef, file);
-        const firebaseUrl = await getDownloadURL(snapshot.ref);
+        // Step 4: Prepare the form data for the API call to /addtxn
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("txn", transactionHash);
 
-        const dbResponse = await fetch("/api/upload", {
-          method: "PATCH", // Changed from POST to PATCH
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email, // Assuming 'address' is the user's email
-            imageUrl: firebaseUrl,
-          }),
+        // Step 5: Make a POST request to the /addtxn API endpoint
+        const apiResponse = await fetch("http://127.0.0.1:5000/addtxn", {
+          method: "POST",
+          body: formData,
         });
-        if (dbResponse.ok) {
-          alert("Document stored successfully!");
+
+        if (apiResponse.ok) {
+          const apiData = await apiResponse.json();
+          const newFileBlob = await apiData.file.blob();
+
+          // Step 6: Create a new File object from the response
+          const newFile = new File([newFileBlob], `hash_${file.name}`, {
+            type: newFileBlob.type,
+          });
+
+          // Step 7: Upload the new file to Firebase Storage
+          const storageRef = ref(
+            storage,
+            `documents/${newFile.name}${Date.now()}`
+          );
+          const snapshot = await uploadBytes(storageRef, newFile);
+          const firebaseUrl = await getDownloadURL(snapshot.ref);
+
+          // Step 8: Update the redacted file URL state
+          setRedactedFileUrl(firebaseUrl);
+
+          // Step 9: Save the Firebase URL to the database
+          const dbResponse = await fetch("/api/upload", {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: email,
+              imageUrl: firebaseUrl,
+              transactionHash: transactionHash,
+            }),
+          });
+
+          if (dbResponse.ok) {
+            alert("Document stored successfully!");
+          } else {
+            alert("Failed to store document in the database.");
+          }
+        } else {
+          alert("Failed to process the document on the server.");
         }
       } catch (error) {
-        console.error("Error uploading to Firebase: ", error);
-        alert("Failed to upload redacted document. Please try again.");
+        console.error("Error processing document: ", error);
+        alert("Failed to process and store document. Please try again.");
+      } finally {
+        setLoading(false); // Set loading to false after process ends
       }
     }
   };
@@ -169,9 +208,13 @@ export default function DocumentPreviewPage() {
                   <Button
                     onClick={handleStoreInDatabase}
                     className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                    disabled={!consentGiven}
+                    disabled={!consentGiven || loading} // Disable when loading
                   >
-                    Store on Our Secure Database
+                    {loading ? (
+                      <span className="loader"></span> // Loader indicator (replace with your preferred loader)
+                    ) : (
+                      "Store on Our Secure Database"
+                    )}
                   </Button>
                 </div>
               </motion.div>
