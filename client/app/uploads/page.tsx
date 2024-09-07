@@ -1,58 +1,65 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import axios from "axios";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react"
+import axios from "axios"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+} from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { TextHoverEffect } from "@/components/ui/text-hover-effect";
-import { FileUpload } from "@/components/ui/file-upload";
-import { useRouter } from "next/navigation";
+} from "@/components/ui/select"
+import { Slider } from "@/components/ui/slider"
+import { TextHoverEffect } from "@/components/ui/text-hover-effect"
+import { FileUpload } from "@/components/ui/file-upload"
+import { useRouter } from "next/navigation"
 
 export default function PurpleUploadPage() {
-  const [file, setFile] = useState<File | null>(null);
-  const [fileType, setFileType] = useState<string>("");
-  const [redactionDegree, setRedactionDegree] = useState<number>(1);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const [file, setFile] = useState<File | null>(null)
+  const [fileType, setFileType] = useState<string>("")
+  const [redactionDegree, setRedactionDegree] = useState<number>(1)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
+
+  const redactionDescriptions = [
+    "Level 1: Basic redaction - Removes URLs, IDs and numerical personal information.",
+    "Level 2: Moderate redaction - Removes URLs, IDs, numerical information and images.",
+    "Level 3: High redaction - Removes all personal and sensitive data, including contextual information.",
+    "Level 4: Maximum redaction - Removes all but essential information, leaving only the core message.",
+  ]
 
   const handleFileChange = (files: File[]) => {
     if (files.length > 0) {
-      setFile(files[0]);
-      setError(null);
+      setFile(files[0])
+      setError(null)
     }
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     if (!file) {
-      setError("Please select a file to upload.");
-      return;
+      setError("Please select a file to upload.")
+      return
     }
-    setIsLoading(true);
-    setError(null);
+    setIsLoading(true)
+    setError(null)
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("fileType", fileType);
-    formData.append("level", redactionDegree.toString());
-    const slug = fileType === "pdf" ? "sensitive" : "redactimg";
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("fileType", fileType)
+    formData.append("level", redactionDegree.toString())
+    const slug = fileType === "pdf" ? "sensitive" : "redactimg"
 
     try {
       const response = await axios.post(
@@ -63,34 +70,32 @@ export default function PurpleUploadPage() {
             "Content-Type": "multipart/form-data",
           },
         }
-      );
+      )
 
-      const contentType = response.headers["content-type"];
+      const contentType = response.headers["content-type"]
       if (contentType && contentType.includes("application/json")) {
-        const jsonData = JSON.stringify(response.data);
-        const originalBlob = new Blob([file], { type: file.type });
-        const originalUrl = URL.createObjectURL(originalBlob);
+        const jsonData = JSON.stringify(response.data)
+        const originalBlob = new Blob([file], { type: file.type })
+        const originalUrl = URL.createObjectURL(originalBlob)
 
-        // Store data in localStorage
-        localStorage.setItem("originalFileUrl", originalUrl);
-        localStorage.setItem("jsonData", jsonData);
+        localStorage.setItem("originalFileUrl", originalUrl)
+        localStorage.setItem("jsonData", jsonData)
 
-        // Navigate to the next page without passing data via URL
-        router.push(`/uploads/choose-redaction?level=${redactionDegree}`);
+        router.push(`/uploads/choose-redaction?level=${redactionDegree}`)
       } else {
         throw new Error(
           `Received response is not a valid JSON. Content type: ${contentType}`
-        );
+        )
       }
     } catch (error) {
-      console.error("There was an error processing the file!", error);
+      console.error("There was an error processing the file!", error)
       setError(
         "An error occurred while processing the file. Please try again."
-      );
+      )
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <div className="h-screen flex items-center justify-center">
@@ -164,6 +169,16 @@ export default function PurpleUploadPage() {
                 <div className="text-right text-sm text-purple-600">
                   Current value: {redactionDegree}
                 </div>
+                <motion.div
+                  key={redactionDegree}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-sm text-purple-700 mt-2"
+                >
+                  {redactionDescriptions[redactionDegree - 1]}
+                </motion.div>
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -199,5 +214,5 @@ export default function PurpleUploadPage() {
         </CardFooter>
       </Card>
     </div>
-  );
+  )
 }
