@@ -107,14 +107,14 @@ export default function ChooseRedactionPage() {
     setError(null);
 
     try {
-      const selectedTypes = selectedOptions.map(
-        (optionId) => options.find((option) => option.id === optionId)?.label
+      const selectedTexts = selectedOptions.map(
+        (optionId) => options.find((option) => option.id === optionId)?.text
       );
 
       const filteredSensitiveInfo = jsonData?.sensitive.filter((item) =>
-        selectedTypes.includes(item.type)
+        selectedTexts.includes(item.text)
       );
-
+      console.log(filteredSensitiveInfo);
       const response = await axios.post(
         "http://127.0.0.1:5000/redactv2",
         {

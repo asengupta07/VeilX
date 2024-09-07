@@ -57,6 +57,8 @@ export default function DocumentPreviewPage() {
 
     if (redactedFileUrl) {
       try {
+        const hash = distributeReward(address, rand);
+
         const response = await fetch(redactedFileUrl);
         const blob = await response.blob();
 
@@ -82,7 +84,6 @@ export default function DocumentPreviewPage() {
         if (dbResponse.ok) {
           alert("Document stored successfully!");
         }
-        distributeReward(address, rand);
       } catch (error) {
         console.error("Error uploading to Firebase: ", error);
         alert("Failed to upload redacted document. Please try again.");

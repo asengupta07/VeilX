@@ -127,15 +127,15 @@ def find_sensitive_data(text, level):
             "[\n"
             "    {\n"
             '        "type": "Name",\n'
-            '        "value": "John Doe"\n'
+            '        "text": "John Doe"\n'
             "    },\n"
             "    {\n"
             '        "type": "Number",\n'
-            '        "value": "1234 5678 9101"\n'
+            '        "text": "1234 5678 9101"\n'
             "    },\n"
             "    {\n"
             '        "type": "Number",\n'
-            '        "value": "ABCDE1234F"\n'
+            '        "text": "ABCDE1234F"\n'
             "    }\n"
             "    // Add ALL identified items\n"
             "]\n\n"
@@ -146,7 +146,7 @@ def find_sensitive_data(text, level):
 
     else:
         prompt = (
-            "You are a powerful text analysis tool designed to identify all potentially sensitive, personally identifiable, or traceable information in text. "
+            "You are a powerful text analysis tool designed to identify all potentially sensitive, personally identifiable, or traceable information in text, including conversations. "
             "Please analyze the following text and flag ALL instances of the following types of information:\n\n"
             "1. Names: Recognize full names of individuals, including but not limited to Indian names.\n"
             "2. Identification Numbers: Identify any numbers that could be identification numbers (e.g., Aadhaar, passport, driving license, employee ID, etc.).\n"
@@ -159,7 +159,8 @@ def find_sensitive_data(text, level):
             "9. Organizations: Flag names of companies, institutions, or any other organizations.\n"
             "10. Locations: Identify any mentioned locations, including countries, states, cities, landmarks, etc.\n"
             "11. Proper Nouns: Flag all proper nouns not covered by the above categories.\n"
-            "12. Other Potential Identifiers: Flag any other information that could potentially be used to identify or trace an individual or entity.\n\n"
+            "12. Conversations: Redact entire conversations that could involve personal or sensitive information. This includes dialogue, chat transcripts, or exchanges where individuals discuss matters that could reveal identity, preferences, or other personal details.\n"
+            "13. Other Potential Identifiers: Flag any other information that could potentially be used to identify or trace an individual or entity.\n\n"
             "Please list each identified item in the following JSON format:\n\n"
             "[\n"
             "    {\n"
@@ -250,7 +251,9 @@ def find_sensitive_data(text, level):
     url_pattern = re.compile(
         r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
     )
-    identifier_pattern = re.compile(r"\b(?:(?:\d{6,})|(?=.*\d)(?=.*[A-Z])[A-Z\d]{8,})\b")
+    identifier_pattern = re.compile(
+        r"\b(?:(?:\d{6,})|(?=.*\d)(?=.*[A-Z])[A-Z\d]{8,})\b"
+    )
 
     for match in url_pattern.finditer(text):
         sensitive_data.append((match.group(), match.start(), match.end(), "URL"))
@@ -269,11 +272,7 @@ def find_sensitive_data(text, level):
 
 def redact_text_in_pdf(pdf_doc, sensitive_data, level, mode):
     # Define fill colors based on the redaction mode
-    fill_colors = {
-        "black": (0, 0, 0),
-        "white": (1, 1, 1),
-        "blur": None  # Special case, handled later
-    }
+    fill_colors = {"black": (0, 0, 0), "white": (1, 1, 1), "blur": (0.5, 0.5, 0.5)}
 
     for page_num in range(pdf_doc.page_count):
         page = pdf_doc[page_num]
@@ -284,13 +283,7 @@ def redact_text_in_pdf(pdf_doc, sensitive_data, level, mode):
                 logging.info(
                     f"Redacting full text on page {page_num + 1}: {data} ({data_type})"
                 )
-                if mode == "blur":
-                    # Apply blur effect instead of a solid fill
-                    page.add_redact_annot(inst)
-                    page.add_blur(inst, radius=5)  # Adjust blur radius as needed
-                else:
-                    # Add redaction annotation with the appropriate fill color
-                    page.add_redact_annot(inst, fill=fill_colors[mode])
+                page.add_redact_annot(inst, fill=fill_colors[mode])
 
             # Split the data into words and redact each word
             words = data.split()
@@ -300,11 +293,7 @@ def redact_text_in_pdf(pdf_doc, sensitive_data, level, mode):
                     logging.info(
                         f"Redacting word on page {page_num + 1}: {word} ({data_type})"
                     )
-                    if mode == "blurred":
-                        page.add_redact_annot(word_inst)
-                        page.add_blur(word_inst, radius=5)
-                    else:
-                        page.add_redact_annot(word_inst, fill=fill_colors[mode])
+                    page.add_redact_annot(word_inst, fill=fill_colors[mode])
 
         # Apply redactions for this page
         if level < 2:
@@ -322,8 +311,8 @@ def get_custom_sensitive_data(text, user_prompt):
         "Identify and flag all items that match the user's criteria. Be robust but do not deviate from the user's prompt. Return them in the following JSON format:\n\n"
         "[\n"
         "    {\n"
-        "        \"type\": \"Custom\",\n"
-        "        \"text\": \"Example data\"\n"
+        '        "type": "Custom",\n'
+        '        "text": "Example data"\n'
         "    }\n"
         "    // Add ALL identified items\n"
         "]\n\n"
@@ -349,11 +338,23 @@ def get_custom_sensitive_data(text, user_prompt):
 
     sensitive_data = []
     for entity in entities:
-        item_text = entity['text']
+        item_text = entity["text"]
         if len(item_text) <= 1:  # Skip single characters
             logging.warning(f"Skipping single character: {item_text}")
             continue
-        if item_text.lower() in ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for']:  # Skip common words
+        if item_text.lower() in [
+            "the",
+            "a",
+            "an",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+        ]:  # Skip common words
             logging.warning(f"Skipping common word: {item_text}")
             continue
         start = 0
@@ -373,11 +374,7 @@ def get_custom_sensitive_data(text, user_prompt):
 
 def redact_images_in_pdf(pdf_doc, mode):
     # Define fill colors based on the redaction mode
-    fill_colors = {
-        "black": (0, 0, 0),
-        "white": (1, 1, 1),
-        "blurred": None  # Special case, handled later
-    }
+    fill_colors = {"black": (0, 0, 0), "white": (1, 1, 1), "blur": (0.5, 0.5, 0.5)}
 
     for page_num in range(pdf_doc.page_count):
         page = pdf_doc[page_num]
@@ -386,14 +383,7 @@ def redact_images_in_pdf(pdf_doc, mode):
             xref = img[0]
             rect = page.get_image_bbox(img)
             logging.info(f"Redacting image on page {page_num + 1}")
-
-            if mode == "blurred":
-                # Redact using a blur effect instead of a solid fill
-                page.add_redact_annot(rect)
-                page.add_blur(rect, radius=10)  # Adjust blur radius for effect
-            else:
-                # Redact the image with a fill color (black or white)
-                page.add_redact_annot(rect, fill=fill_colors[mode])
+            page.add_redact_annot(rect, fill=fill_colors[mode])
 
         # Apply redactions for this page
         page.apply_redactions()
@@ -410,11 +400,11 @@ def get_sensitive(input_pdf, level):
     return sensitive_data
 
 
-
 def get_sensitive_custom(input_pdf, prompt):
     text, pdf_doc = extract_text_from_pdf(input_pdf)
     sensitive_data = get_custom_sensitive_data(text, prompt)
     return sensitive_data
+
 
 def custom_redactv2(input_pdf, sensitive_data, output_pdf, image, mode):
     text, pdf_doc = extract_text_from_pdf(input_pdf)
@@ -429,7 +419,7 @@ def custom_redactv2(input_pdf, sensitive_data, output_pdf, image, mode):
 def redactv2(input_pdf, sensitive_data, output_pdf, level, mode):
     text, pdf_doc = extract_text_from_pdf(input_pdf)
     redact_text_in_pdf(pdf_doc, sensitive_data, level, mode)
-    if level < 2:
+    if level > 1:
         redact_images_in_pdf(pdf_doc, mode)
     save_redacted_pdf(pdf_doc, output_pdf)
     logging.info(f"Redacted PDF saved as {output_pdf}")
@@ -448,20 +438,24 @@ def annotate_sensitive_data_in_pdf(pdf_doc, sensitive_data):
             instances = page.search_for(entity_text)
             for inst in instances:
                 # Log the annotation
-                logging.info(f"Annotating '{entity_text}' as {entity_type} on page {page_num + 1}")
-                
+                logging.info(
+                    f"Annotating '{entity_text}' as {entity_type} on page {page_num + 1}"
+                )
+
                 # Add a highlight annotation to the sensitive data
                 highlight = page.add_highlight_annot(inst)
 
                 # Optionally, you can add a popup note to explain the annotation
                 highlight.set_info(
                     title="Sensitive Data",
-                    content=f"Type: {entity_type}\nText: {entity_text}"
+                    content=f"Type: {entity_type}\nText: {entity_text}",
                 )
+
 
 def save_annotated_pdf(pdf_doc, output_path):
     pdf_doc.save(output_path, garbage=4, deflate=True, clean=True)
     pdf_doc.close()
+
 
 def annotate_pdf(input_pdf, sensitive_data, output_pdf):
     text, pdf_doc = extract_text_from_pdf(input_pdf)
