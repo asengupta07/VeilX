@@ -2,12 +2,46 @@ from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 from redact import redact
 from img_redact import redactImg
-from redactv2 import get_sensitive, redactv2, annotate_pdf, get_custom_sensitive_data, custom_redactv2
+from redactv2 import get_sensitive, redactv2, annotate_pdf, get_custom_sensitive_data, custom_redactv2, add_transaction_hash_to_pdf
 import os
 import shutil
 
 app = Flask(__name__)
 CORS(app)
+
+@app.route('/addtxn', methods=['POST'])
+def addtxn():
+    if "file" not in request.files:
+        return "No file part", 400
+    
+    doc = request.files["file"]
+    txn = request.form["txn"]
+
+    if doc.filename == "":
+        return "No selected file", 400
+    
+    in_path = f"temp/{doc.filename}"
+    out_path = f"temp/hash_{doc.filename}"
+
+    doc.save(in_path)
+
+    try:
+        transaction_hash = add_transaction_hash_to_pdf(in_path, out_path)
+        
+        resp = send_file(out_path, as_attachment=True, download_name=f"hash_{doc.filename}")
+        
+        clear_temp_folder()
+        
+        return jsonify({
+            'message': 'Transaction hash added successfully',
+            'transaction_hash': transaction_hash,
+            'file': resp
+        })
+    except Exception as e:
+        clear_temp_folder()
+        return jsonify({
+            'error': str(e)
+        }), 500
 
 @app.route('/redactv2', methods=['POST'])
 def rv2():
@@ -61,10 +95,8 @@ def customsens():
         li['type'] = sens[3]
         resp.append(li)
     
-    # Annotate the PDF with sensitive information
     annotate_pdf(in_path, sensitive, annotated_path)
 
-    # Return both the annotated PDF and JSON response
     return jsonify({
         'doc': doc.filename,
         'sensitive': resp,
@@ -112,7 +144,6 @@ def sens():
 
     doc.save(in_path)
 
-    # Get sensitive data
     sensitive = get_sensitive(in_path, level)
     resp = []
     for sens in sensitive:
@@ -123,10 +154,8 @@ def sens():
         li['type'] = sens[3]
         resp.append(li)
     
-    # Annotate the PDF with sensitive information
     annotate_pdf(in_path, sensitive, annotated_path)
 
-    # Return both the annotated PDF and JSON response
     return jsonify({
         'doc': doc.filename,
         'sensitive': resp,

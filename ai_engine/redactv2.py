@@ -7,20 +7,51 @@ import google.generativeai as genai
 import ast
 from dotenv import load_dotenv
 import os
+import fitz
+import random
 
 load_dotenv()
 
 API_KEY = os.getenv("API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# Set up logging
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-# Configure Gemini
 genai.configure(api_key=GOOGLE_API_KEY)
 
+
+def add_transaction_hash_to_pdf(input_pdf, output_pdf, txnhash):
+    doc = fitz.open(input_pdf)
+    
+    transaction_hash = txnhash
+    
+    for page in doc:
+        page_width = page.rect.width
+        page_height = page.rect.height
+        
+        font_size = 8
+        hash_width = fitz.get_text_length(transaction_hash, fontname="helv", fontsize=font_size)
+        hash_height = font_size
+        
+        for _ in range(100):
+            x = random.uniform(10, page_width - hash_width - 10)
+            y = random.uniform(10, page_height - hash_height - 10)
+            
+            rect = fitz.Rect(x, y, x + hash_width, y + hash_height)
+            
+            if not page.get_text(clip=rect) and not page.get_image_info(rect):
+                page.insert_text((x, y), transaction_hash, fontsize=font_size, color=(0, 0, 0))
+                break
+        else:
+            print(f"Could not find empty space on page {page.number + 1}")
+    
+    doc.save(output_pdf)
+    doc.close()
+
+    print(f"Added transaction hash to PDF. Saved as {output_pdf}")
+    return transaction_hash
 
 def extract_text_from_pdf(pdf_path):
     doc = fitz.open(pdf_path)
@@ -32,7 +63,6 @@ def extract_text_from_pdf(pdf_path):
 
 
 def extract_json(response_text):
-    # Regex to detect and extract JSON from the response
     try:
         json_data = json.loads(response_text)
         return json_data
@@ -220,7 +250,7 @@ def find_sensitive_data(text, level):
     sensitive_data = []
     for entity in entities:
         item_text = entity["text"]
-        if len(item_text) <= 1:  # Skip single characters
+        if len(item_text) <= 1: 
             logging.warning(f"Skipping single character: {item_text}")
             continue
         if item_text.lower() in [
@@ -235,7 +265,7 @@ def find_sensitive_data(text, level):
             "at",
             "to",
             "for",
-        ]:  # Skip common words
+        ]:  
             logging.warning(f"Skipping common word: {item_text}")
             continue
         start = 0
@@ -247,7 +277,6 @@ def find_sensitive_data(text, level):
             sensitive_data.append((item_text, start, end, entity["type"]))
             start = end
 
-    # Additional regex patterns for URLs and potential identifiers
     url_pattern = re.compile(
         r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
     )
@@ -263,7 +292,6 @@ def find_sensitive_data(text, level):
             (match.group(), match.start(), match.end(), "Potential Identifier")
         )
 
-    # Log all identified sensitive data
     for data in sensitive_data:
         logging.debug(f"Identified sensitive data: {data}")
 
@@ -285,7 +313,6 @@ def redact_text_in_pdf(pdf_doc, sensitive_data, level, mode):
                 )
                 page.add_redact_annot(inst, fill=fill_colors[mode])
 
-            # Split the data into words and redact each word
             words = data.split()
             for word in words:
                 word_instances = page.search_for(word, quads=True)
@@ -295,7 +322,6 @@ def redact_text_in_pdf(pdf_doc, sensitive_data, level, mode):
                     )
                     page.add_redact_annot(word_inst, fill=fill_colors[mode])
 
-        # Apply redactions for this page
         if level < 2:
             page.apply_redactions(images=0, graphics=0)
         else:
@@ -303,7 +329,6 @@ def redact_text_in_pdf(pdf_doc, sensitive_data, level, mode):
 
 
 def get_custom_sensitive_data(text, user_prompt):
-    # Customize the prompt based on the user input
     prompt = (
         "You are a powerful text analysis tool. "
         "Please analyze the following text based on the user's custom prompt:\n\n"
@@ -320,12 +345,11 @@ def get_custom_sensitive_data(text, user_prompt):
     )
 
     try:
-        # Use get_gemini_response to make the request and get a response
         gemini_response = get_gemini_response(prompt)
         if gemini_response:
-            print(gemini_response)  # Debugging print statement
+            print(gemini_response)
             try:
-                entities = json.loads(gemini_response)  # Parsing the JSON response
+                entities = json.loads(gemini_response)
             except json.JSONDecodeError:
                 logging.error("Error: Unable to parse JSON response from Gemini API")
                 return []
@@ -385,7 +409,6 @@ def redact_images_in_pdf(pdf_doc, mode):
             logging.info(f"Redacting image on page {page_num + 1}")
             page.add_redact_annot(rect, fill=fill_colors[mode])
 
-        # Apply redactions for this page
         page.apply_redactions()
 
 
@@ -434,7 +457,6 @@ def annotate_sensitive_data_in_pdf(pdf_doc, sensitive_data):
             entity_text = entity[0]
             entity_type = entity[3]
 
-            # Find all instances of the sensitive data in the page's text
             instances = page.search_for(entity_text)
             for inst in instances:
                 # Log the annotation
@@ -445,7 +467,6 @@ def annotate_sensitive_data_in_pdf(pdf_doc, sensitive_data):
                 # Add a highlight annotation to the sensitive data
                 highlight = page.add_highlight_annot(inst)
 
-                # Optionally, you can add a popup note to explain the annotation
                 highlight.set_info(
                     title="Sensitive Data",
                     content=f"Type: {entity_type}\nText: {entity_text}",
@@ -464,7 +485,7 @@ def annotate_pdf(input_pdf, sensitive_data, output_pdf):
     logging.info(f"Annotated PDF saved as {output_pdf}")
 
 
-# if __name__ == "__main__":
-#     input_pdf = "input5.pdf"
-#     output_pdf = "output5.pdf"
-#     redact(input_pdf, output_pdf)
+if __name__ == "__main__":
+    input_pdf = "input5.pdf"
+    output_pdf = "output5.pdf"
+    redactv2(input_pdf, output_pdf)
