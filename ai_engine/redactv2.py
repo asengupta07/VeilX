@@ -26,14 +26,14 @@ genai.configure(api_key=GOOGLE_API_KEY)
 def add_transaction_hash_to_pdf(input_pdf, output_pdf):
     doc = fitz.open(input_pdf)
     
-    transaction_hash = hashlib.sha256(str(random.random()).encode()).hexdigest()[:16]
+    transaction_hash = f"Signed using hash: {hashlib.sha256(str(random.random()).encode()).hexdigest()[:16]}"
     
     for page in doc:
         page_width = page.rect.width
         page_height = page.rect.height
         
         font_size = 8
-        hash_width = fitz.get_text_length(transaction_hash, fontname="helv", fontsize=font_size)
+        hash_width = fitz.get_text_length(transaction_hash, fontname="mono", fontsize=font_size)
         hash_height = font_size
         
         for _ in range(100):
