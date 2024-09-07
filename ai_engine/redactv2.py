@@ -33,7 +33,7 @@ def add_transaction_hash_to_pdf(input_pdf, output_pdf):
         page_height = page.rect.height
         
         font_size = 8
-        hash_width = fitz.get_text_length(transaction_hash, fontname="mono", fontsize=font_size)
+        hash_width = fitz.get_text_length(transaction_hash, fontname="helv", fontsize=font_size)
         hash_height = font_size
         
         for _ in range(100):
