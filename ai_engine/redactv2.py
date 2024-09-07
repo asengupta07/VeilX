@@ -6,6 +6,7 @@ import logging
 import google.generativeai as genai
 import ast
 from dotenv import load_dotenv
+import hashlib
 import os
 import fitz
 import random
@@ -22,10 +23,10 @@ logging.basicConfig(
 genai.configure(api_key=GOOGLE_API_KEY)
 
 
-def add_transaction_hash_to_pdf(input_pdf, output_pdf, txnhash):
+def add_transaction_hash_to_pdf(input_pdf, output_pdf):
     doc = fitz.open(input_pdf)
     
-    transaction_hash = txnhash
+    transaction_hash = hashlib.sha256(str(random.random()).encode()).hexdigest()[:16]
     
     for page in doc:
         page_width = page.rect.width
@@ -75,7 +76,7 @@ def extract_json(response_text):
             try:
                 json_data = ast.literal_eval(json_string)
                 return json_data
-            except json.JSONDecodeError as e:
+            except Exception:
                 logging.error(f"Error decoding JSON: {str(e)}")
                 return None
     return None
@@ -239,12 +240,12 @@ def find_sensitive_data(text, level):
         if gemini_response:
             try:
                 entities = extract_json(gemini_response)
-            except json.JSONDecodeError:
+            except Exception:
                 logging.error("Error: Unable to parse JSON response from Gemini API")
-                return []
+                entities = []
         else:
             logging.error("Both Jabir and Gemini API calls failed")
-            return []
+            entities = []
 
     sensitive_data = []
     for entity in entities:
