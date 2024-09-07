@@ -264,7 +264,14 @@ def find_sensitive_data(text, level):
     return sensitive_data
 
 
-def redact_text_in_pdf(pdf_doc, sensitive_data, level):
+def redact_text_in_pdf(pdf_doc, sensitive_data, level, mode):
+    # Define fill colors based on the redaction mode
+    fill_colors = {
+        "black": (0, 0, 0),
+        "white": (1, 1, 1),
+        "blur": None  # Special case, handled later
+    }
+
     for page_num in range(pdf_doc.page_count):
         page = pdf_doc[page_num]
         for data, start, end, data_type in sensitive_data:
@@ -274,7 +281,13 @@ def redact_text_in_pdf(pdf_doc, sensitive_data, level):
                 logging.info(
                     f"Redacting full text on page {page_num + 1}: {data} ({data_type})"
                 )
-                page.add_redact_annot(inst, fill=(1, 1, 1))
+                if mode == "blur":
+                    # Apply blur effect instead of a solid fill
+                    page.add_redact_annot(inst)
+                    page.add_blur(inst, radius=5)  # Adjust blur radius as needed
+                else:
+                    # Add redaction annotation with the appropriate fill color
+                    page.add_redact_annot(inst, fill=fill_colors[mode])
 
             # Split the data into words and redact each word
             words = data.split()
@@ -284,13 +297,18 @@ def redact_text_in_pdf(pdf_doc, sensitive_data, level):
                     logging.info(
                         f"Redacting word on page {page_num + 1}: {word} ({data_type})"
                     )
-                    page.add_redact_annot(word_inst, fill=(1, 1, 1))
+                    if mode == "blurred":
+                        page.add_redact_annot(word_inst)
+                        page.add_blur(word_inst, radius=5)
+                    else:
+                        page.add_redact_annot(word_inst, fill=fill_colors[mode])
 
         # Apply redactions for this page
         if level < 3:
             page.apply_redactions(images=0, graphics=0)
         else:
             page.apply_redactions()
+
 
 def get_custom_sensitive_data(text, user_prompt):
     # Customize the prompt based on the user input
@@ -350,17 +368,29 @@ def get_custom_sensitive_data(text, user_prompt):
     return sensitive_data
 
 
-def redact_images_in_pdf(pdf_doc):
+def redact_images_in_pdf(pdf_doc, mode):
+    # Define fill colors based on the redaction mode
+    fill_colors = {
+        "black": (0, 0, 0),
+        "white": (1, 1, 1),
+        "blurred": None  # Special case, handled later
+    }
+
     for page_num in range(pdf_doc.page_count):
         page = pdf_doc[page_num]
         image_list = page.get_images(full=True)
         for img_index, img in enumerate(image_list):
             xref = img[0]
             rect = page.get_image_bbox(img)
-            # Log each image redaction
             logging.info(f"Redacting image on page {page_num + 1}")
-            # Create a black rectangle to cover the image
-            page.add_redact_annot(rect, fill=(1, 1, 1))
+
+            if mode == "blurred":
+                # Redact using a blur effect instead of a solid fill
+                page.add_redact_annot(rect)
+                page.add_blur(rect, radius=10)  # Adjust blur radius for effect
+            else:
+                # Redact the image with a fill color (black or white)
+                page.add_redact_annot(rect, fill=fill_colors[mode])
 
         # Apply redactions for this page
         page.apply_redactions()
@@ -383,21 +413,21 @@ def get_sensitive_custom(input_pdf, prompt):
     sensitive_data = get_custom_sensitive_data(text, prompt)
     return sensitive_data
 
-def custom_redactv2(input_pdf, sensitive_data, output_pdf, image):
+def custom_redactv2(input_pdf, sensitive_data, output_pdf, image, mode):
     text, pdf_doc = extract_text_from_pdf(input_pdf)
     level = 4 if image else 1
-    redact_text_in_pdf(pdf_doc, sensitive_data, level)
+    redact_text_in_pdf(pdf_doc, sensitive_data, level, mode)
     if image:
-        redact_images_in_pdf(pdf_doc)
+        redact_images_in_pdf(pdf_doc, mode)
     save_redacted_pdf(pdf_doc, output_pdf)
     logging.info(f"Redacted PDF saved as {output_pdf}")
 
 
-def redactv2(input_pdf, sensitive_data, output_pdf, level):
+def redactv2(input_pdf, sensitive_data, output_pdf, level, mode):
     text, pdf_doc = extract_text_from_pdf(input_pdf)
-    redact_text_in_pdf(pdf_doc, sensitive_data, level)
+    redact_text_in_pdf(pdf_doc, sensitive_data, level, mode)
     if level < 2:
-        redact_images_in_pdf(pdf_doc)
+        redact_images_in_pdf(pdf_doc, mode)
     save_redacted_pdf(pdf_doc, output_pdf)
     logging.info(f"Redacted PDF saved as {output_pdf}")
 
