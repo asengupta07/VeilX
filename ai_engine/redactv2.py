@@ -76,7 +76,7 @@ def extract_json(response_text):
             try:
                 json_data = ast.literal_eval(json_string)
                 return json_data
-            except Exception:
+            except Exception as e:
                 logging.error(f"Error decoding JSON: {str(e)}")
                 return None
     return None
