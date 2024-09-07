@@ -7,20 +7,52 @@ import google.generativeai as genai
 import ast
 from dotenv import load_dotenv
 import os
+import fitz
+import hashlib
+import random
 
 load_dotenv()
 
 API_KEY = os.getenv("API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# Set up logging
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-# Configure Gemini
 genai.configure(api_key=GOOGLE_API_KEY)
 
+
+def add_transaction_hash_to_pdf(input_pdf, output_pdf, txnhash):
+    doc = fitz.open(input_pdf)
+    
+    transaction_hash = txnhash
+    
+    for page in doc:
+        page_width = page.rect.width
+        page_height = page.rect.height
+        
+        font_size = 8
+        hash_width = fitz.get_text_length(transaction_hash, fontname="helv", fontsize=font_size)
+        hash_height = font_size
+        
+        for _ in range(100):
+            x = random.uniform(10, page_width - hash_width - 10)
+            y = random.uniform(10, page_height - hash_height - 10)
+            
+            rect = fitz.Rect(x, y, x + hash_width, y + hash_height)
+            
+            if not page.get_text(clip=rect) and not page.get_image_info(rect):
+                page.insert_text((x, y), transaction_hash, fontsize=font_size, color=(0, 0, 0))
+                break
+        else:
+            print(f"Could not find empty space on page {page.number + 1}")
+    
+    doc.save(output_pdf)
+    doc.close()
+
+    print(f"Added transaction hash to PDF. Saved as {output_pdf}")
+    return transaction_hash
 
 def extract_text_from_pdf(pdf_path):
     doc = fitz.open(pdf_path)
@@ -32,7 +64,6 @@ def extract_text_from_pdf(pdf_path):
 
 
 def extract_json(response_text):
-    # Regex to detect and extract JSON from the response
     try:
         json_data = json.loads(response_text)
         return json_data
