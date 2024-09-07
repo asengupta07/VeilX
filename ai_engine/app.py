@@ -94,10 +94,8 @@ def customsens():
         li['type'] = sens[3]
         resp.append(li)
     
-    # Annotate the PDF with sensitive information
     annotate_pdf(in_path, sensitive, annotated_path)
 
-    # Return both the annotated PDF and JSON response
     return jsonify({
         'doc': doc.filename,
         'sensitive': resp,
@@ -145,7 +143,6 @@ def sens():
 
     doc.save(in_path)
 
-    # Get sensitive data
     sensitive = get_sensitive(in_path, level)
     resp = []
     for sens in sensitive:
@@ -156,10 +153,8 @@ def sens():
         li['type'] = sens[3]
         resp.append(li)
     
-    # Annotate the PDF with sensitive information
     annotate_pdf(in_path, sensitive, annotated_path)
 
-    # Return both the annotated PDF and JSON response
     return jsonify({
         'doc': doc.filename,
         'sensitive': resp,

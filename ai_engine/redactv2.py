@@ -8,7 +8,6 @@ import ast
 from dotenv import load_dotenv
 import os
 import fitz
-import hashlib
 import random
 
 load_dotenv()
@@ -250,7 +249,7 @@ def find_sensitive_data(text, level):
     sensitive_data = []
     for entity in entities:
         item_text = entity["text"]
-        if len(item_text) <= 1:  # Skip single characters
+        if len(item_text) <= 1: 
             logging.warning(f"Skipping single character: {item_text}")
             continue
         if item_text.lower() in [
@@ -265,7 +264,7 @@ def find_sensitive_data(text, level):
             "at",
             "to",
             "for",
-        ]:  # Skip common words
+        ]:  
             logging.warning(f"Skipping common word: {item_text}")
             continue
         start = 0
@@ -277,7 +276,6 @@ def find_sensitive_data(text, level):
             sensitive_data.append((item_text, start, end, entity["type"]))
             start = end
 
-    # Additional regex patterns for URLs and potential identifiers
     url_pattern = re.compile(
         r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
     )
@@ -291,7 +289,6 @@ def find_sensitive_data(text, level):
             (match.group(), match.start(), match.end(), "Potential Identifier")
         )
 
-    # Log all identified sensitive data
     for data in sensitive_data:
         logging.debug(f"Identified sensitive data: {data}")
 
@@ -299,11 +296,10 @@ def find_sensitive_data(text, level):
 
 
 def redact_text_in_pdf(pdf_doc, sensitive_data, level, mode):
-    # Define fill colors based on the redaction mode
     fill_colors = {
         "black": (0, 0, 0),
         "white": (1, 1, 1),
-        "blur": None  # Special case, handled later
+        "blur": None 
     }
 
     for page_num in range(pdf_doc.page_count):
@@ -316,14 +312,11 @@ def redact_text_in_pdf(pdf_doc, sensitive_data, level, mode):
                     f"Redacting full text on page {page_num + 1}: {data} ({data_type})"
                 )
                 if mode == "blur":
-                    # Apply blur effect instead of a solid fill
                     page.add_redact_annot(inst)
-                    page.add_blur(inst, radius=5)  # Adjust blur radius as needed
+                    page.add_blur(inst, radius=5)
                 else:
-                    # Add redaction annotation with the appropriate fill color
                     page.add_redact_annot(inst, fill=fill_colors[mode])
 
-            # Split the data into words and redact each word
             words = data.split()
             for word in words:
                 word_instances = page.search_for(word, quads=True)
@@ -337,7 +330,6 @@ def redact_text_in_pdf(pdf_doc, sensitive_data, level, mode):
                     else:
                         page.add_redact_annot(word_inst, fill=fill_colors[mode])
 
-        # Apply redactions for this page
         if level < 2:
             page.apply_redactions(images=0, graphics=0)
         else:
@@ -345,7 +337,6 @@ def redact_text_in_pdf(pdf_doc, sensitive_data, level, mode):
 
 
 def get_custom_sensitive_data(text, user_prompt):
-    # Customize the prompt based on the user input
     prompt = (
         "You are a powerful text analysis tool. "
         "Please analyze the following text based on the user's custom prompt:\n\n"
@@ -362,12 +353,11 @@ def get_custom_sensitive_data(text, user_prompt):
     )
 
     try:
-        # Use get_gemini_response to make the request and get a response
         gemini_response = get_gemini_response(prompt)
         if gemini_response:
-            print(gemini_response)  # Debugging print statement
+            print(gemini_response)
             try:
-                entities = json.loads(gemini_response)  # Parsing the JSON response
+                entities = json.loads(gemini_response)
             except json.JSONDecodeError:
                 logging.error("Error: Unable to parse JSON response from Gemini API")
                 return []
@@ -381,7 +371,7 @@ def get_custom_sensitive_data(text, user_prompt):
     sensitive_data = []
     for entity in entities:
         item_text = entity['text']
-        if len(item_text) <= 1:  # Skip single characters
+        if len(item_text) <= 1:
             logging.warning(f"Skipping single character: {item_text}")
             continue
         if item_text.lower() in ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for']:  # Skip common words
@@ -403,11 +393,10 @@ def get_custom_sensitive_data(text, user_prompt):
 
 
 def redact_images_in_pdf(pdf_doc, mode):
-    # Define fill colors based on the redaction mode
     fill_colors = {
         "black": (0, 0, 0),
         "white": (1, 1, 1),
-        "blurred": None  # Special case, handled later
+        "blurred": None
     }
 
     for page_num in range(pdf_doc.page_count):
@@ -419,14 +408,11 @@ def redact_images_in_pdf(pdf_doc, mode):
             logging.info(f"Redacting image on page {page_num + 1}")
 
             if mode == "blurred":
-                # Redact using a blur effect instead of a solid fill
                 page.add_redact_annot(rect)
-                page.add_blur(rect, radius=10)  # Adjust blur radius for effect
+                page.add_blur(rect, radius=10)  
             else:
-                # Redact the image with a fill color (black or white)
                 page.add_redact_annot(rect, fill=fill_colors[mode])
 
-        # Apply redactions for this page
         page.apply_redactions()
 
 
@@ -475,16 +461,12 @@ def annotate_sensitive_data_in_pdf(pdf_doc, sensitive_data):
             entity_text = entity[0]
             entity_type = entity[3]
 
-            # Find all instances of the sensitive data in the page's text
             instances = page.search_for(entity_text)
             for inst in instances:
-                # Log the annotation
                 logging.info(f"Annotating '{entity_text}' as {entity_type} on page {page_num + 1}")
                 
-                # Add a highlight annotation to the sensitive data
                 highlight = page.add_highlight_annot(inst)
 
-                # Optionally, you can add a popup note to explain the annotation
                 highlight.set_info(
                     title="Sensitive Data",
                     content=f"Type: {entity_type}\nText: {entity_text}"
@@ -501,7 +483,7 @@ def annotate_pdf(input_pdf, sensitive_data, output_pdf):
     logging.info(f"Annotated PDF saved as {output_pdf}")
 
 
-# if __name__ == "__main__":
-#     input_pdf = "input5.pdf"
-#     output_pdf = "output5.pdf"
-#     redact(input_pdf, output_pdf)
+if __name__ == "__main__":
+    input_pdf = "input5.pdf"
+    output_pdf = "output5.pdf"
+    redactv2(input_pdf, output_pdf)
