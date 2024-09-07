@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Minus, Plus, ShoppingCart, Sun, Moon } from "lucide-react";
+import { Minus, Plus, ShoppingCart, Sun, Moon, Loader2 } from "lucide-react";
 import { useStateContext } from "../contexts/StateContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +13,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+}
 
 const products = [
   {
@@ -62,9 +69,21 @@ export default function Component() {
   );
 }
 
-function ProductCard({ product }: { product: any }) {
+function ProductCard({ product }: { product: Product }) {
   const { address, buyData } = useStateContext();
   const [quantity, setQuantity] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleBuy = async () => {
+    setIsLoading(true);
+    try {
+      await buyData((product.price * quantity).toFixed(2));
+    } catch (error) {
+      console.error("Purchase failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <motion.div
@@ -102,6 +121,7 @@ function ProductCard({ product }: { product: any }) {
                 size="icon"
                 className="h-8 w-8 rounded-full border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white dark:hover:text-black"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                disabled={isLoading}
               >
                 <Minus className="h-4 w-4" />
               </Button>
@@ -113,24 +133,31 @@ function ProductCard({ product }: { product: any }) {
                   setQuantity(Math.max(1, parseInt(e.target.value) || 1))
                 }
                 className="w-16 text-center bg-transparent border-purple-500 text-purple-500 dark:text-purple-300"
+                disabled={isLoading}
               />
               <Button
                 variant="outline"
                 size="icon"
                 className="h-8 w-8 rounded-full border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white dark:hover:text-black"
                 onClick={() => setQuantity(quantity + 1)}
+                disabled={isLoading}
               >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
             <Button
               className="bg-purple-600 hover:bg-purple-700 text-white"
-              onClick={() => {
-                buyData((product.price * quantity).toFixed(2));
-              }}
+              onClick={handleBuy}
+              disabled={isLoading}
             >
-              <ShoppingCart className="mr-2 h-4 w-4" />
-              Buy {(product.price * quantity).toFixed(2)} AVAX
+              {isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <ShoppingCart className="mr-2 h-4 w-4" />
+              )}
+              {isLoading
+                ? "Buying..."
+                : `Buy ${(product.price * quantity).toFixed(2)} AVAX`}
             </Button>
           </div>
         </CardFooter>
