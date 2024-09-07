@@ -51,7 +51,7 @@ interface StateContextType {
   contract: any;
   account: any;
   buyData: (amount: string) => Promise<void>;
-  distributeReward: (address: string, amount: string) => Promise<void>;
+  distributeReward: (address: string, amount: string) => Promise<`0x${string}`>;
 }
 const StateContext = createContext<StateContextType | undefined>(undefined);
 
@@ -113,7 +113,7 @@ export function StateContextProvider({ children }: { children: ReactNode }) {
       chain,
       transactionHash: tx.transactionHash,
     });
-    console.log(receipt);
+    return receipt.transactionHash;
   }
   return (
     <StateContext.Provider

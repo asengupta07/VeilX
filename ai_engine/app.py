@@ -50,6 +50,7 @@ def rv2():
     doc = data['doc']
     print(type(data['level']))
     level = int(data['level'])
+    mode = data['mode']
 
     in_path = f"temp/{doc}"
     out_path = f"temp/redacted_{doc}"
@@ -59,7 +60,7 @@ def rv2():
         tup = (sen['text'], sen['start'], sen['end'], sen['type'])
         sens.append(tup)
 
-    redactv2(in_path, sens, out_path, level)
+    redactv2(in_path, sens, out_path, level, mode)
 
     add_transaction_hash_to_pdf(out_path, vop)
 
