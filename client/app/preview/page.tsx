@@ -20,6 +20,9 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { useAuth } from "../contexts/authContext";
 import axios from "axios";
+import { upload } from "thirdweb/storage";
+import { client } from "@/app/client";
+import { MediaRenderer } from "thirdweb/react";
 
 export default function DocumentPreviewPage() {
   const { email } = useAuth();
@@ -29,6 +32,7 @@ export default function DocumentPreviewPage() {
   const [consentGiven, setConsentGiven] = useState(false);
   const [loading, setLoading] = useState(false); // New loading state
   const searchParams = useSearchParams();
+  const [ipfsUrl, setIpfsUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUrls = async () => {
@@ -66,8 +70,38 @@ export default function DocumentPreviewPage() {
     fetchUrls();
   }, [searchParams]);
 
-  const handleStoreOnBlockchain = () => {
+  const handleStoreOnBlockchain = async () => {
     console.log("Storing on blockchain...");
+    if (originalFileUrl) {
+      const response = await fetch(originalFileUrl);
+      const blob = await response.blob();
+
+      const file = new File([blob], "original_document.pdf", {
+        type: blob.type,
+      });
+      const uri = await upload({
+        client,
+        files: [file],
+      });
+
+      console.log("URI:", uri);
+      const dbResponse = await fetch("/api/upload", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          imageUrl: uri,
+        }),
+      });
+      setIpfsUrl(uri);
+      if (dbResponse.ok) {
+        alert("Document stored on the blockchain successfully!");
+      } else {
+        alert("Failed to store document in the database.");
+      }
+    }
   };
 
   const handleDownloadRedacted = () => {
@@ -190,6 +224,19 @@ export default function DocumentPreviewPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-8">
+              {ipfsUrl && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="space-y-4"
+                >
+                  <Label className="text-lg font-semibold text-purple-700">
+                    Stored Document
+                  </Label>
+                  <MediaRenderer client={client} src={ipfsUrl} />
+                </motion.div>
+              )}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
