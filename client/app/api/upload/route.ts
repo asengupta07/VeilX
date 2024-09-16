@@ -3,35 +3,45 @@ import mongoose from "mongoose";
 import UserSchema from "@/app/_models/schema";
 import connectToDatabase from "@/app/_middleware/mongodb";
 
-export async function PATCH(req: NextRequest) {
+async function patchhandler(req: NextRequest) {
   try {
-    // Connect to the database
     await connectToDatabase();
     
-    // Get the User model (reuse existing model if already defined)
     const User = mongoose.models.User || mongoose.model("User", UserSchema);
 
-    // Parse request body
-    const { email, imageUrl } = await req.json();
+    const { email, fileUrl, fileType, fileCategory } = await req.json();
 
-    // Find user by email
+    if (!email || !fileUrl || !fileType || !fileCategory) {
+      console.error("Missing required fields");
+      console.error({ email, fileUrl, fileType, fileCategory });
+      return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
+    }
+
     const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    // Add the imageUrl to the images array
-    user.images.push(imageUrl);
+    const newFile = {
+      url: fileUrl,
+      type: fileType,
+      category: fileCategory,
+    };
 
-    // Save the updated user document
+    user.files.push(newFile);
+
     await user.save();
 
-    return NextResponse.json({ message: "Image added successfully" }, { status: 200 });
-  } catch (error : any) {
-    console.error("Error adding image:", error);
+    return NextResponse.json({ message: "File added successfully" }, { status: 200 });
+  } catch (error: any) {
+    console.error("Error adding file:", error);
     return NextResponse.json(
       { message: "Internal Server Error", error: error.message },
       { status: 500 }
     );
   }
+}
+
+export {
+  patchhandler as PATCH,
 }

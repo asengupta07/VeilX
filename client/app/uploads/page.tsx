@@ -83,7 +83,13 @@ export default function PurpleUploadPage() {
 
       const contentType = response.headers["content-type"];
       if (contentType && contentType.includes("application/json")) {
-        const jsonData = JSON.stringify(response.data);
+        let data = response.data;
+        data.fileType = fileType;
+        let cat = await axios.post("http://127.0.0.1:5000/getcat", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        data.fileCategory = cat.data.category;
+        const jsonData = JSON.stringify(data);
         const originalBlob = new Blob([file], { type: file.type }); // file has type File | null, so `file?.type` is safer
         const originalUrl = URL.createObjectURL(originalBlob);
 
@@ -91,9 +97,9 @@ export default function PurpleUploadPage() {
         localStorage.setItem("jsonData", jsonData);
 
         if (redactionMode === "level") {
-          router.push(`/uploads/choose-redaction?level=${redactionDegree}`);
+          router.push(`/uploads/options?level=${redactionDegree}`);
         } else {
-          router.push(`/preview?original=${encodeURIComponent(originalUrl)}`); // Assuming customPrompt holds sensitive data in JSON format
+          router.push(`/preview?original=${encodeURIComponent(originalUrl)}`);
         }
       } else {
         throw new Error(

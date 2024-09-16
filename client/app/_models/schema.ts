@@ -15,11 +15,20 @@ const UserSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    images: {
-        type: [String],
-        required: false
-    },
-    
-  });
+    files: [{
+        url: {
+            type: String,
+            required: true
+        },
+        type: {
+            type: String,
+            required: true
+        },
+        category: {
+            type: String,
+            required: true
+        }
+    }]
+});
 
 export default UserSchema;

@@ -23,9 +23,12 @@ import axios from "axios";
 import { upload } from "thirdweb/storage";
 import { client } from "@/app/client";
 import { MediaRenderer } from "thirdweb/react";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
 export default function DocumentPreviewPage() {
   const { email } = useAuth();
+  const { toast } = useToast();
   const { distributeReward, address } = useStateContext();
   const [originalFileUrl, setOriginalFileUrl] = useState<string | null>(null);
   const [redactedFileUrl, setRedactedFileUrl] = useState<string | null>(null);
@@ -85,6 +88,7 @@ export default function DocumentPreviewPage() {
       });
 
       console.log("URI:", uri);
+      const data = JSON.parse(localStorage.getItem("jsonData") || "");
       const dbResponse = await fetch("/api/upload", {
         method: "PATCH",
         headers: {
@@ -92,14 +96,28 @@ export default function DocumentPreviewPage() {
         },
         body: JSON.stringify({
           email: email,
-          imageUrl: uri,
+          fileUrl: uri,
+          fileType: data.fileType,
+          fileCategory: data.fileCategory,
         }),
       });
       setIpfsUrl(uri);
       if (dbResponse.ok) {
-        alert("Document stored on the blockchain successfully!");
+        toast({
+          title: "Success!",
+          description: "Stored document on InterPlanetary File System successfully.",
+          action: (
+            <ToastAction altText="Success"></ToastAction>
+          ),
+        })
       } else {
-        alert("Failed to store document in the database.");
+        toast({
+          title: "Error!",
+          description: "Failed to store document on IPFS.",
+          action: (
+            <ToastAction altText="Error"></ToastAction>
+          ),
+        })
       }
     }
   };
@@ -136,34 +154,38 @@ export default function DocumentPreviewPage() {
         });
 
         // Step 4: Prepare the form data for the API call to /addtxn
-        // const formData = new FormData();
-        // formData.append("file", file);
-        // formData.append("txn", transactionHash);
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("txn", transactionHash);
 
-        // // Step 5: Make a POST request to the /addtxn API endpoint
-        // const apiResponse = await fetch("http://127.0.0.1:5000/addtxn", {
-        //   method: "POST",
-        //   body: formData,
-        // });
+        // Step 5: Make a POST request to the /addtxn API endpoint
+        const apiResponse = await axios.post(
+          "http://127.0.0.1:5000/addtxn",
+          formData,
+          {
+            responseType: "blob",
+          }
+        );
+        if (apiResponse.status === 200) {
+          // Step 5: Create a new Blob object from the response
+          const contentType = apiResponse.headers["content-type"];
+          const newFileBlob = new Blob([apiResponse.data], { type: contentType });
 
-        // if (apiResponse.ok) {
-        //   const apiData = await apiResponse.json();
-        //   const newFileBlob = await apiData.file.blob();
-
-        //   // Step 6: Create a new File object from the response
-        //   const newFile = new File([newFileBlob], `hash_${file.name}`, {
-        //     type: newFileBlob.type,
-        //   });
+          // Step 6: Create a new File object from the response
+          const newFile = new File([newFileBlob], `hash_${file.name}`, {
+            type: newFileBlob.type,
+          });
 
         // Step 7: Upload the new file to Firebase Storage
-        const storageRef = ref(storage, `documents/${file.name}${Date.now()}`);
-        const snapshot = await uploadBytes(storageRef, file);
+        const storageRef = ref(storage, `documents/${newFile.name}${Date.now()}`);
+        const snapshot = await uploadBytes(storageRef, newFile);
         const firebaseUrl = await getDownloadURL(snapshot.ref);
 
         // Step 8: Update the redacted file URL state
         setRedactedFileUrl(firebaseUrl);
 
         // Step 9: Save the Firebase URL to the database
+        const data = JSON.parse(localStorage.getItem("jsonData") || "");
         const dbResponse = await fetch("/api/upload", {
           method: "PATCH",
           headers: {
@@ -171,17 +193,32 @@ export default function DocumentPreviewPage() {
           },
           body: JSON.stringify({
             email: email,
-            imageUrl: firebaseUrl,
+            fileUrl: firebaseUrl,
+            fileType: data.fileType,
+            fileCategory: data.fileCategory,
             transactionHash: transactionHash,
           }),
         });
 
         if (dbResponse.ok) {
-          alert("Document stored successfully!");
+          toast({
+            title: "Success!",
+            description: "Stored document in the database successfully.",
+            action: (
+              <ToastAction altText="Success"></ToastAction>
+            ),
+          })
         } else {
-          alert("Failed to store document in the database.");
+          toast({
+            title: "Error!",
+            description: "Failed to store document in the database.",
+            action: (
+              <ToastAction altText="Error"></ToastAction>
+            ),
+          })
         }
-      } finally {
+      }
+     } finally {
         setLoading(false); // Set loading to false after process ends
       }
     }
