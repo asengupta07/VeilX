@@ -2,7 +2,7 @@ from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 from redact import redact
 from img_redact import redactImg
-from redactv2 import get_sensitive, redactv2, annotate_pdf, get_sensitive_custom, custom_redactv2, add_transaction_hash_to_pdf
+from redactv2 import get_sensitive, redactv2, annotate_pdf, get_sensitive_custom, custom_redactv2, add_txn, get_cat
 import os
 import shutil
 
@@ -26,19 +26,40 @@ def addtxn():
     doc.save(in_path)
 
     try:
-        transaction_hash = add_transaction_hash_to_pdf(in_path, out_path)
+        add_txn(in_path, out_path, txn)
         
-        resp = send_file(out_path, as_attachment=True, download_name=f"hash_{doc.filename}")
+        resp = send_file(out_path, as_attachment=True, download_name=f"hashed_{doc.filename}")
         
-        clear_temp_folder()
-        
+        return resp
+    
+    except Exception as e:
+        # clear_temp_folder()
+        print(e)
         return jsonify({
-            'message': 'Transaction hash added successfully',
-            'transaction_hash': transaction_hash,
-            'file': resp
+            'error': str(e)
+        }), 500
+    
+    
+@app.route('/getcat', methods=['POST'])
+def getcat():
+    if "file" not in request.files:
+        return "No file part", 400
+    
+    doc = request.files["file"]
+
+    if doc.filename == "":
+        return "No selected file", 400
+    
+    in_path = f"temp/{doc.filename}"
+
+    doc.save(in_path)
+
+    try:
+        category = get_cat(in_path)        
+        return jsonify({
+            'category': category
         })
     except Exception as e:
-        clear_temp_folder()
         return jsonify({
             'error': str(e)
         }), 500
@@ -61,8 +82,6 @@ def rv2():
         sens.append(tup)
 
     redactv2(in_path, sens, out_path, level, mode)
-
-    add_transaction_hash_to_pdf(out_path, vop)
 
     resp = send_file(vop, as_attachment=True, download_name=f"redacted_{doc}")
 
@@ -124,7 +143,7 @@ def customrv2():
 
     resp = send_file(out_path, as_attachment=True, download_name=f"redacted_{doc}")
 
-    clear_temp_folder()
+    # clear_temp_folder()
 
     return resp
 

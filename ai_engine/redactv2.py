@@ -23,40 +23,33 @@ logging.basicConfig(
 genai.configure(api_key=GOOGLE_API_KEY)
 
 
-def add_transaction_hash_to_pdf(input_pdf, output_pdf):
+def add_txn(input_pdf, output_pdf, txn=None):
     doc = fitz.open(input_pdf)
-
-    transaction_hash = f"Signed using hash: {hashlib.sha256(str(random.random()).encode()).hexdigest()[:16]}"
-
+    
+    if txn:
+        transaction_hash = f"Signed using hash: {txn}"
+    else:
+        transaction_hash = f"Signed using hash: {hashlib.sha256(str(random.random()).encode()).hexdigest()[:16]}"
+    
+    font_size = 8 
+    
     for page in doc:
-        page_width = page.rect.width
         page_height = page.rect.height
-
-        font_size = 8
-        hash_width = fitz.get_text_length(
-            transaction_hash, fontname="helv", fontsize=font_size
-        )
         hash_height = font_size
-
-        for _ in range(100):
-            x = random.uniform(10, page_width - hash_width - 10)
-            y = random.uniform(10, page_height - hash_height - 10)
-
-            rect = fitz.Rect(x, y, x + hash_width, y + hash_height)
-
-            if not page.get_text(clip=rect) and not page.get_image_info(rect):
-                page.insert_text(
-                    (x, y), transaction_hash, fontsize=font_size, color=(0, 0, 0)
-                )
-                break
-        else:
-            print(f"Could not find empty space on page {page.number + 1}")
+        
+        margin_x = 10
+        margin_y = 10
+        x = margin_x
+        y = page_height - hash_height - margin_y
+        
+        page.insert_text(
+            (x, y), transaction_hash, fontsize=font_size, color=(0, 0, 0)
+        )
 
     doc.save(output_pdf)
     doc.close()
 
     print(f"Added transaction hash to PDF. Saved as {output_pdf}")
-    return transaction_hash
 
 
 def extract_text_from_pdf(pdf_path):
@@ -305,13 +298,11 @@ def find_sensitive_data(text, level):
 
 
 def redact_text_in_pdf(pdf_doc, sensitive_data, level, mode):
-    # Define fill colors based on the redaction mode
     fill_colors = {"black": (0, 0, 0), "white": (1, 1, 1), "blur": (0.5, 0.5, 0.5)}
 
     for page_num in range(pdf_doc.page_count):
         page = pdf_doc[page_num]
         for data, start, end, data_type in sensitive_data:
-            # Redact the full sensitive data
             instances = page.search_for(data, quads=True)
             for inst in instances:
                 logging.info(
@@ -327,6 +318,25 @@ def redact_text_in_pdf(pdf_doc, sensitive_data, level, mode):
                         f"Redacting word on page {page_num + 1}: {word} ({data_type})"
                     )
                     page.add_redact_annot(word_inst, fill=fill_colors[mode])
+
+        if level < 2:
+            page.apply_redactions(images=0, graphics=0)
+        else:
+            page.apply_redactions()
+
+
+def custom_redact_text(pdf_doc, sensitive_data, level, mode):
+    fill_colors = {"black": (0, 0, 0), "white": (1, 1, 1), "blur": (0.5, 0.5, 0.5)}
+
+    for page_num in range(pdf_doc.page_count):
+        page = pdf_doc[page_num]
+        for data, start, end, data_type in sensitive_data:
+            instances = page.search_for(data, quads=True)
+            for inst in instances:
+                logging.info(
+                    f"Redacting full text on page {page_num + 1}: {data} ({data_type})"
+                )
+                page.add_redact_annot(inst, fill=fill_colors[mode])
 
         if level < 2:
             page.apply_redactions(images=0, graphics=0)
@@ -380,7 +390,7 @@ def get_custom_sensitive_data(text, user_prompt):
     sensitive_data = []
     for entity in entities:
         item_text = entity["text"]
-        if len(item_text) <= 1:  # Skip single characters
+        if len(item_text) <= 1:
             logging.warning(f"Skipping single character: {item_text}")
             continue
         if item_text.lower() in [
@@ -395,7 +405,7 @@ def get_custom_sensitive_data(text, user_prompt):
             "at",
             "to",
             "for",
-        ]:  # Skip common words
+        ]:
             logging.warning(f"Skipping common word: {item_text}")
             continue
         start = 0
@@ -414,7 +424,6 @@ def get_custom_sensitive_data(text, user_prompt):
 
 
 def redact_images_in_pdf(pdf_doc, mode):
-    # Define fill colors based on the redaction mode
     fill_colors = {"black": (0, 0, 0), "white": (1, 1, 1), "blur": (0.5, 0.5, 0.5)}
 
     for page_num in range(pdf_doc.page_count):
@@ -449,7 +458,7 @@ def get_sensitive_custom(input_pdf, prompt):
 def custom_redactv2(input_pdf, sensitive_data, output_pdf, image, mode):
     text, pdf_doc = extract_text_from_pdf(input_pdf)
     level = 4 if image else 1
-    redact_text_in_pdf(pdf_doc, sensitive_data, level, mode)
+    custom_redact_text(pdf_doc, sensitive_data, level, mode)
     if image:
         redact_images_in_pdf(pdf_doc, mode)
     save_redacted_pdf(pdf_doc, output_pdf)
@@ -465,6 +474,40 @@ def redactv2(input_pdf, sensitive_data, output_pdf, level, mode):
     logging.info(f"Redacted PDF saved as {output_pdf}")
 
 
+def get_cat(input_pdf):
+    text, pdf_doc = extract_text_from_pdf(input_pdf)
+    prompt = (
+        "You are a powerful text analysis tool designed to identify the type of document based on its content. "
+        "Please analyze the following text and determine the category of the document. "
+        "You should consider the context, language, and structure of the text to make an accurate assessment. "
+        "Provide your analysis based on the following categories:\n\n"
+        "1. **Identification Document**: This category includes documents such as Aadhaar cards, PAN cards, driver's licenses, passports, and other forms of identification.\n"
+        "2. **Financial Document**: This category includes bank statements, tax returns, invoices, receipts, and other financial records.\n"
+        "3. **Legal Document**: This category includes contracts, agreements, court orders, and other legal documents.\n"
+        "4. **Medical Document**: This category includes medical reports, prescriptions, insurance claims, and other healthcare-related documents.\n"
+        "5. **Educational Document**: This category includes transcripts, diplomas, certificates, and other educational records.\n"
+        "6. **Personal Communication**: This category includes emails, letters, messages, and other personal correspondence.\n"
+        "7. **Business Document**: This category includes business plans, proposals, reports, and other corporate documents.\n"
+        "8. **Other Document**: This category includes any document that does not fit into the above categories.\n\n"
+        "Please provide your analysis based on these instructions. Only return the category of the document in the following JSON format:\n\n"
+        "{\n"
+        '    "category": "Financial Document"\n'
+        "}\n\n"
+        "Ensure that you maintain this exact format at ALL COSTS.\n\n"
+        f"Text to analyze:\n{text}"
+    )
+
+    response = get_gemini_response(prompt)
+    try:
+        response_json = extract_json(response)
+        category = response_json[0]["category"]
+    except Exception:
+        logging.error("Error: Unable to parse JSON response from Gemini API")
+        category = "Other Document"
+
+    return category
+
+
 def annotate_sensitive_data_in_pdf(pdf_doc, sensitive_data):
     for page_num in range(pdf_doc.page_count):
         page = pdf_doc[page_num]
@@ -476,12 +519,10 @@ def annotate_sensitive_data_in_pdf(pdf_doc, sensitive_data):
 
             instances = page.search_for(entity_text)
             for inst in instances:
-                # Log the annotation
                 logging.info(
                     f"Annotating '{entity_text}' as {entity_type} on page {page_num + 1}"
                 )
 
-                # Add a highlight annotation to the sensitive data
                 highlight = page.add_highlight_annot(inst)
 
                 highlight.set_info(
