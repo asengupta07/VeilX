@@ -129,8 +129,8 @@ def customrv2():
     sensitive = data['sensitive']
     doc = data['doc']
 
-    # image = True if int(data["image"]) == 1 else False
-    image = False
+    image = True if int(data["image"]) == 1 else False
+    # image = False
 
     in_path = f"temp/{doc}"
     out_path = f"temp/redacted_{doc}"

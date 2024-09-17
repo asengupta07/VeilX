@@ -46,9 +46,15 @@ export default function DocumentPreviewPage() {
       if (redactedUrl) setRedactedFileUrl(decodeURIComponent(redactedUrl));
       else {
         const jsonData = localStorage.getItem("jsonData");
+        const redactImages = localStorage.getItem("imagesRedacted");
+
         if (jsonData) {
           try {
             const data = JSON.parse(jsonData);
+
+            // Add the redactImages value to the data object
+            data.image = redactImages === "1" ? "1" : "0";
+
             const response = await axios.post(
               "http://127.0.0.1:5000/customrv2",
               data,
@@ -105,19 +111,16 @@ export default function DocumentPreviewPage() {
       if (dbResponse.ok) {
         toast({
           title: "Success!",
-          description: "Stored document on InterPlanetary File System successfully.",
-          action: (
-            <ToastAction altText="Success"></ToastAction>
-          ),
-        })
+          description:
+            "Stored document on InterPlanetary File System successfully.",
+          action: <ToastAction altText="Success"></ToastAction>,
+        });
       } else {
         toast({
           title: "Error!",
           description: "Failed to store document on IPFS.",
-          action: (
-            <ToastAction altText="Error"></ToastAction>
-          ),
-        })
+          action: <ToastAction altText="Error"></ToastAction>,
+        });
       }
     }
   };
@@ -169,56 +172,57 @@ export default function DocumentPreviewPage() {
         if (apiResponse.status === 200) {
           // Step 5: Create a new Blob object from the response
           const contentType = apiResponse.headers["content-type"];
-          const newFileBlob = new Blob([apiResponse.data], { type: contentType });
+          const newFileBlob = new Blob([apiResponse.data], {
+            type: contentType,
+          });
 
           // Step 6: Create a new File object from the response
           const newFile = new File([newFileBlob], `hash_${file.name}`, {
             type: newFileBlob.type,
           });
 
-        // Step 7: Upload the new file to Firebase Storage
-        const storageRef = ref(storage, `documents/${newFile.name}${Date.now()}`);
-        const snapshot = await uploadBytes(storageRef, newFile);
-        const firebaseUrl = await getDownloadURL(snapshot.ref);
+          // Step 7: Upload the new file to Firebase Storage
+          const storageRef = ref(
+            storage,
+            `documents/${newFile.name}${Date.now()}`
+          );
+          const snapshot = await uploadBytes(storageRef, newFile);
+          const firebaseUrl = await getDownloadURL(snapshot.ref);
 
-        // Step 8: Update the redacted file URL state
-        setRedactedFileUrl(firebaseUrl);
+          // Step 8: Update the redacted file URL state
+          setRedactedFileUrl(firebaseUrl);
 
-        // Step 9: Save the Firebase URL to the database
-        const data = JSON.parse(localStorage.getItem("jsonData") || "");
-        const dbResponse = await fetch("/api/upload", {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email,
-            fileUrl: firebaseUrl,
-            fileType: data.fileType,
-            fileCategory: data.fileCategory,
-            transactionHash: transactionHash,
-          }),
-        });
+          // Step 9: Save the Firebase URL to the database
+          const data = JSON.parse(localStorage.getItem("jsonData") || "");
+          const dbResponse = await fetch("/api/upload", {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: email,
+              fileUrl: firebaseUrl,
+              fileType: data.fileType,
+              fileCategory: data.fileCategory,
+              transactionHash: transactionHash,
+            }),
+          });
 
-        if (dbResponse.ok) {
-          toast({
-            title: "Success!",
-            description: "Stored document in the database successfully.",
-            action: (
-              <ToastAction altText="Success"></ToastAction>
-            ),
-          })
-        } else {
-          toast({
-            title: "Error!",
-            description: "Failed to store document in the database.",
-            action: (
-              <ToastAction altText="Error"></ToastAction>
-            ),
-          })
+          if (dbResponse.ok) {
+            toast({
+              title: "Success!",
+              description: "Stored document in the database successfully.",
+              action: <ToastAction altText="Success"></ToastAction>,
+            });
+          } else {
+            toast({
+              title: "Error!",
+              description: "Failed to store document in the database.",
+              action: <ToastAction altText="Error"></ToastAction>,
+            });
+          }
         }
-      }
-     } finally {
+      } finally {
         setLoading(false); // Set loading to false after process ends
       }
     }
@@ -261,19 +265,6 @@ export default function DocumentPreviewPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-8">
-              {ipfsUrl && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="space-y-4"
-                >
-                  <Label className="text-lg font-semibold text-purple-700">
-                    Stored Document
-                  </Label>
-                  <MediaRenderer client={client} src={ipfsUrl} />
-                </motion.div>
-              )}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}

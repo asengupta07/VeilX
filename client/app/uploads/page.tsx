@@ -23,6 +23,8 @@ import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 import { FileUpload } from "@/components/ui/file-upload";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CheckedState } from "@radix-ui/react-checkbox";
 
 export default function PurpleUploadPage() {
   const [file, setFile] = useState<File | null>(null); // Updated to File | null
@@ -32,6 +34,7 @@ export default function PurpleUploadPage() {
   const [error, setError] = useState<string | null>(null); // Updated to string | null
   const [customPrompt, setCustomPrompt] = useState<string>(""); // Explicit string type
   const [redactionMode, setRedactionMode] = useState("level"); // 'level' or 'custom'
+  const [imagesRedacted, setImagesRedacted] = useState(false);
   const router = useRouter();
 
   const redactionDescriptions = [
@@ -79,6 +82,7 @@ export default function PurpleUploadPage() {
             headers: { "Content-Type": "multipart/form-data" },
           }
         );
+        localStorage.setItem("imagesRedacted", imagesRedacted ? "1" : "0");
       }
 
       const contentType = response.headers["content-type"];
@@ -228,6 +232,19 @@ export default function PurpleUploadPage() {
                     value={customPrompt}
                     onChange={(e) => setCustomPrompt(e.target.value)}
                   />
+                  <Checkbox
+                    id="Redact Images"
+                    checked={imagesRedacted}
+                    onCheckedChange={(checked: CheckedState) =>
+                      setImagesRedacted(!!checked)
+                    }
+                  />
+                  <label
+                    htmlFor="consent"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    I want to Redact Images
+                  </label>
                 </motion.div>
               )}
               {error && (
