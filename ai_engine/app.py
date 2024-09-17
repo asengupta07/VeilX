@@ -38,6 +38,12 @@ def addtxn():
         return jsonify({
             'error': str(e)
         }), 500
+
+
+@app.route('/clear', methods=['GET'])
+def clear():
+    clear_temp_folder()
+    return "Temp folder cleared"
     
     
 @app.route('/getcat', methods=['POST'])
