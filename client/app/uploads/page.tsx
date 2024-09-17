@@ -232,19 +232,27 @@ export default function PurpleUploadPage() {
                     value={customPrompt}
                     onChange={(e) => setCustomPrompt(e.target.value)}
                   />
-                  <Checkbox
-                    id="Redact Images"
-                    checked={imagesRedacted}
-                    onCheckedChange={(checked: CheckedState) =>
-                      setImagesRedacted(!!checked)
-                    }
-                  />
-                  <label
-                    htmlFor="consent"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="mt-6 flex items-center space-x-2"
                   >
-                    I want to Redact Images
-                  </label>
+                    <Checkbox
+                      id="images-redacted"
+                      className="peer h-4 w-4 text-purple-600 border-purple-500 focus:ring-purple-500"
+                      checked={imagesRedacted}
+                      onCheckedChange={(checked: CheckedState) =>
+                        setImagesRedacted(!!checked)
+                      }
+                    />
+                    <label
+                      htmlFor="images-redacted"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      I want to Redact Images
+                    </label>
+                  </motion.div>
                 </motion.div>
               )}
               {error && (
