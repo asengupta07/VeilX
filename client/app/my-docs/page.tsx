@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { FileText, Star } from 'lucide-react'
+import { FileText, Star, Edit2, Check } from 'lucide-react'
 import { TextHoverEffect } from '@/components/ui/text-hover-effect'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from '../contexts/authContext'
@@ -22,6 +22,8 @@ export default function MyDocuments() {
   const [previewTop, setPreviewTop] = useState(60)
   const [lastScrollY, setLastScrollY] = useState(0)
   const [selectedType, setSelectedType] = useState<string | null>("All")
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingName, setEditingName] = useState('')
   const { email } = useAuth()
 
   const documentTypes = ['Original Document', 'Redacted Document']
@@ -113,6 +115,20 @@ export default function MyDocuments() {
     )
   }
 
+  const handleEditClick = (id: number, name: string) => {
+    setEditingId(id)
+    setEditingName(name)
+  }
+
+  const handleEditSave = (id: number) => {
+    setDocuments(prev =>
+      prev.map(doc =>
+        doc.id === id ? { ...doc, name: editingName } : doc
+      )
+    )
+    setEditingId(null)
+  }
+
   return (
     <div className="flex p-6">
         <div className="absolute h-screen flex items-center justify-center">
@@ -169,10 +185,35 @@ export default function MyDocuments() {
                   <TableBody>
                     {filteredDocuments.map((doc) => (
                       <TableRow key={doc.id} className="cursor-pointer hover:bg-purple-50 dark:hover:bg-slate-900">
-                        <TableCell className="font-medium text-purple-700" onClick={() => handlePreview(doc.id)}>
+                        <TableCell className="font-medium text-purple-700">
                           <div className="flex items-center">
-                              <FileText className="mr-2 h-4 w-4 text-purple-500" />
-                            {doc.name}
+                            <FileText className="mr-2 h-4 w-4 text-purple-500" />
+                            {editingId === doc.id ? (
+                              <Input
+                                value={editingName}
+                                onChange={(e) => setEditingName(e.target.value)}
+                                className="mr-2"
+                              />
+                            ) : (
+                              <span onClick={() => handlePreview(doc.id)}>{doc.name}</span>
+                            )}
+                            {editingId === doc.id ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditSave(doc.id)}
+                              >
+                                <Check className="h-4 w-4 text-green-500" />
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditClick(doc.id, doc.name)}
+                              >
+                                <Edit2 className="h-4 w-4 text-purple-500" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-purple-600">{doc.type}</TableCell>

@@ -81,7 +81,6 @@ def rv2():
 
     in_path = f"temp/{doc}"
     out_path = f"temp/redacted_{doc}"
-    vop = f"temp/verified_{doc}"
     sens = []
     for sen in sensitive:
         tup = (sen['text'], sen['start'], sen['end'], sen['type'])
@@ -89,7 +88,7 @@ def rv2():
 
     redactv2(in_path, sens, out_path, level, mode)
 
-    resp = send_file(vop, as_attachment=True, download_name=f"redacted_{doc}")
+    resp = send_file(out_path, as_attachment=True, download_name=f"redacted_{doc}")
 
     clear_temp_folder()
 
