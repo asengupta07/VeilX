@@ -21,6 +21,8 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 API_KEY = os.getenv("API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
+genai.configure(api_key=GOOGLE_API_KEY)
+
 def perform_ocr(image):
     # Convert OpenCV image to PIL Image
     pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))

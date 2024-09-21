@@ -1,0 +1,439 @@
+import cv2
+import numpy as np
+import easyocr
+import json
+import requests
+import logging
+from PIL import Image
+from ultralytics import YOLO
+import os
+import google.generativeai as genai
+import ast
+from dotenv import load_dotenv
+import re
+import pytesseract
+import pyzbar.pyzbar as pyzbar
+
+
+load_dotenv()
+
+
+pytesseract.pytesseract.tesseract_cmd = ( r'/usr/bin/tesseract' )
+
+API_KEY = os.getenv("API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+genai.configure(api_key=GOOGLE_API_KEY)
+
+# OCR function to extract text from the image
+
+def extract_json(response_text):
+    try:
+        json_data = json.loads(response_text)
+        return json_data
+    except Exception:
+        json_pattern = re.search(
+            r"```(JSON|json)?\s*(.*?)```", response_text, re.DOTALL
+        )
+        if json_pattern:
+            json_string = json_pattern.group(2)
+            try:
+                json_data = ast.literal_eval(json_string)
+                return json_data
+            except Exception as e:
+                logging.error(f"Error decoding JSON: {str(e)}")
+                return None
+    return None
+
+
+def get_gemini_response(prompt):
+    try:
+        model = genai.GenerativeModel("gemini-pro")
+        safety_settings = [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_NONE",
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_NONE",
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_NONE",
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_NONE",
+            },
+        ]
+        response = model.generate_content(prompt, safety_settings=safety_settings)
+        return response.text
+    except Exception as e:
+        logging.error(f"Error in Gemini API call: {str(e)}")
+        return None
+    
+
+def perform_ocr(image):
+    # Convert OpenCV image to PIL Image
+    pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    ocr_data = pytesseract.image_to_data(pil_image, output_type=pytesseract.Output.DICT, lang='eng')
+    return ocr_data
+
+# Function to detect sensitive data from OCR results
+def find_sensitive_data(text, level):
+    # print("Level: ", level, level==1, type(level), int(level)==1)
+    if level == 1 or level == 2:
+        prompt = (
+            "You are a powerful text analysis tool designed to identify all important and sensitive numbers in text. "
+            "Please analyze the following text and flag any instances of personally identifiable numbers including but not limited to the following types of numbers:\n\n"
+            "1. Aadhaar Numbers: Detect any mention of Aadhaar numbers.\n"
+            "2. PAN Numbers: Identify any PAN (Permanent Account Number) in the text.\n"
+            "3. Passport Numbers: Flag any references to passport numbers.\n"
+            "4. Driving License Numbers: Identify any driving license numbers mentioned.\n"
+            "5. Employee ID Numbers: Detect any employee ID numbers.\n"
+            "6. Bank Account Numbers: Identify any bank account numbers.\n"
+            "7. Credit/Debit Card Numbers: Flag any credit or debit card numbers.\n"
+            "8. Roll Numbers/Registration Numbers: Flag any roll numbers or registration numbers.\n"
+            "9. Other Identification Numbers: Detect any other sensitive identification numbers that could be used to identify an individual or entity.\n\n"
+            "Please list each identified number in the following JSON format:\n\n"
+            "[\n"
+            "    {\n"
+            '        "type": "Aadhaar Number",\n'
+            '        "text": "1234 5678 9101"\n'
+            "    },\n"
+            "    {\n"
+            '        "type": "PAN Number",\n'
+            '        "text": "ABCDE1234F"\n'
+            "    }\n"
+            "    // Add ALL identified items\n"
+            "]\n\n"
+            "Err on the side of caution - if in doubt, include it. However, do not flag single digits or common numeric sequences unless they are part of a sensitive number. Be very thorough and take into account cultural variations such as Indian identification numbers, etc."
+            "Provide your comprehensive analysis based on these instructions. Only return the JSON. If at all no item is found, return an empty list.\n\n"
+            f"Text to analyze:\n{text}"
+        )
+
+    elif level == 3:
+        prompt = (
+            "You are a highly advanced text analysis tool with the capability to detect and flag all instances of names and numbers within a text. Your task is to comprehensively analyze the text provided and identify every occurrence of any name or number, regardless of its format, context, or cultural origin. This includes but is not limited to the following categories:\n\n"
+            "1. **Personal Identification Numbers**: Capture any numbers that could serve as personal identifiers, such as Aadhaar numbers, PAN numbers, Social Security numbers, National ID numbers, and others. Include associated names if present.\n"
+            "2. **Financial Account Numbers**: Identify any financial-related numbers, including bank account numbers, credit card numbers, debit card numbers, IBAN, SWIFT codes, etc., and any associated names.\n"
+            "3. **Government-Issued Document Numbers**: Detect numbers related to government-issued documents, such as passport numbers, driving license numbers, voter ID numbers, visa numbers, tax identification numbers, and more. Include any related names.\n"
+            "4. **Employee and Student Identification Numbers**: Identify numbers related to employment or education, including employee ID numbers, student ID numbers, and any other institutional identification numbers, along with associated names.\n"
+            "5. **Contact Numbers**: Capture phone numbers, mobile numbers, fax numbers, and other contact-related numbers.\n"
+            "6. **Names on Resumes, CVs, or Job Applications**: Detect any names associated with resumes, CVs, cover letters, job applications, or related documents.\n"
+            "7. **Healthcare and Insurance Document Numbers**: Identify numbers related to healthcare or insurance documents, including policy numbers, patient ID numbers, health insurance numbers, and associated names.\n"
+            "8. **Vehicle and Property Registration Numbers**: Detect vehicle registration numbers, property deed numbers, or any other numbers related to ownership documents, along with any related names.\n"
+            "9. **Any Other Names and Numbers**: Flag any other names and numbers that could be tied to an individual, entity, or important document, including but not limited to serial numbers, utility account numbers, tax records, and registration IDs.\n\n"
+            "Your task is to list every identified name and number as a separate instance in the following JSON format:\n\n"
+            "[\n"
+            "    {\n"
+            '        "type": "Name",\n'
+            '        "text": "John Doe"\n'
+            "    },\n"
+            "    {\n"
+            '        "type": "Number",\n'
+            '        "text": "1234 5678 9101"\n'
+            "    },\n"
+            "    {\n"
+            '        "type": "Number",\n'
+            '        "text": "ABCDE1234F"\n'
+            "    }\n"
+            "    // Add ALL identified items\n"
+            "]\n\n"
+            "Err on the side of caution—if there is any doubt about whether something is a name or number, include it. Consider all variations in name and number formats across different cultures and document types. Your goal is to identify every possible name and number, leaving nothing unflagged.\n"
+            "Return only the JSON output containing the flagged names and numbers.\n\n"
+            f"Text to analyze:\n{text}"
+        )
+
+    else:
+        prompt = (
+            "You are a powerful text analysis tool designed to identify all potentially sensitive, personally identifiable, or traceable information in text, including conversations. "
+            "Please analyze the following text and flag ALL instances of the following types of information:\n\n"
+            "1. Names: Recognize full names of individuals, including but not limited to Indian names.\n"
+            "2. Identification Numbers: Identify any numbers that could be identification numbers (e.g., Aadhaar, passport, driving license, employee ID, etc.).\n"
+            "3. Addresses: Detect any references to addresses, including street names, city names, and postal codes.\n"
+            "4. Phone Numbers: Find all phone numbers, including international formats.\n"
+            "5. Email Addresses: Identify all email addresses.\n"
+            "6. URLs: Detect all URLs and web addresses.\n"
+            "7. Dates: Flag all dates, including birthdays and significant events.\n"
+            "8. Financial Information: Identify bank account numbers, credit card numbers, and any monetary amounts.\n"
+            "9. Organizations: Flag names of companies, institutions, or any other organizations.\n"
+            "10. Locations: Identify any mentioned locations, including countries, states, cities, landmarks, etc.\n"
+            "11. Proper Nouns: Flag all proper nouns not covered by the above categories.\n"
+            "12. Conversations: Redact entire conversations that could involve personal or sensitive information. This includes dialogue, chat transcripts, or exchanges where individuals discuss matters that could reveal identity, preferences, or other personal details.\n"
+            "13. Other Potential Identifiers: Flag any other information that could potentially be used to identify or trace an individual or entity.\n\n"
+            "Please list each identified item in the following JSON format:\n\n"
+            "[\n"
+            "    {\n"
+            '        "type": "Name",\n'
+            '        "text": "John Doe"\n'
+            "    },\n"
+            "    {\n"
+            '        "type": "URL",\n'
+            '        "text": "https://example.com"\n'
+            "    }\n"
+            "    // Add ALL identified items\n"
+            "]\n\n"
+            "Err on the side of caution - if in doubt, include it. However, do not flag single letters or common words unless they are part of a larger sensitive item. Be very thorough and take into account cultural variations such as Indian names, Indian addresses, etc."
+            "Provide your comprehensive analysis based on these instructions. Only return the JSON.\n\n"
+            f"Text to analyze:\n{text}"
+        )
+
+    data = {"messages": [{"role": "user", "content": prompt}]}
+
+    headers = {"Content-Type": "application/json", "apiKey": API_KEY}
+    try:
+        response = requests.post(
+            "https://api.jabirproject.org/generate", json=data, headers=headers
+        )
+        if response.status_code == 200:
+            entities_json = response.json().get("result", {}).get("content", "")
+            print(entities_json)
+            try:
+                entities = json.loads(entities_json)
+            except json.JSONDecodeError:
+                logging.error("Error: Unable to parse JSON response from Jabir API")
+                entities = None
+        else:
+            logging.error(
+                f"Error in Jabir API call: {response.status_code} - {response.text}"
+            )
+            entities = None
+    except Exception as e:
+        logging.error(f"Error in Jabir API call: {e}")
+        entities = None
+
+    if entities is None:
+        logging.info("Falling back to Gemini Pro API")
+        print("prompt: ", prompt)
+        gemini_response = get_gemini_response(prompt)
+        print(gemini_response)
+        if gemini_response:
+            try:
+                entities = extract_json(gemini_response)
+            except Exception:
+                logging.error("Error: Unable to parse JSON response from Gemini API")
+                entities = []
+        else:
+            logging.error("Both Jabir and Gemini API calls failed")
+            entities = []
+
+    sensitive_data = []
+    for entity in entities:
+        item_text = entity["text"]
+        if len(item_text) <= 1:
+            logging.warning(f"Skipping single character: {item_text}")
+            continue
+        if item_text.lower() in [
+            "the",
+            "a",
+            "an",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+        ]:
+            logging.warning(f"Skipping common word: {item_text}")
+            continue
+        start = 0
+        while True:
+            start = text.find(item_text, start)
+            if start == -1:
+                break
+            end = start + len(item_text)
+            sensitive_data.append((item_text, start, end, entity["type"]))
+            start = end
+
+    url_pattern = re.compile(
+        r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+    )
+    identifier_pattern = re.compile(
+        r"\b(?:(?:\d{6,})|(?=.*\d)(?=.*[A-Z])[A-Z\d]{8,})\b"
+    )
+
+    for match in url_pattern.finditer(text):
+        sensitive_data.append((match.group(), match.start(), match.end(), "URL"))
+
+    for match in identifier_pattern.finditer(text):
+        sensitive_data.append(
+            (match.group(), match.start(), match.end(), "Potential Identifier")
+        )
+
+    for data in sensitive_data:
+        logging.debug(f"Identified sensitive data: {data}")
+
+    return sensitive_data
+
+
+# Function to redact sensitive data
+def redact_sensitive_data(image, ocr_data, sensitive_data, mode='black'):
+    height, width = image.shape[:2]
+    mask = np.zeros((height, width), dtype=np.uint8)
+
+    for entity in sensitive_data:
+        entity_text = entity['text'].lower()
+        entity_words = entity_text.split()
+        
+        i = 0
+        while i < len(ocr_data['text']):
+            if ocr_data['text'][i].lower() == entity_words[0]:
+                match_length = 1
+                for j in range(1, len(entity_words)):
+                    if i + j < len(ocr_data['text']) and ocr_data['text'][i + j].lower() == entity_words[j]:
+                        match_length += 1
+                    else:
+                        break
+                
+                if match_length == len(entity_words):
+                    x_min = min(ocr_data['left'][i + k] for k in range(match_length))
+                    y_min = min(ocr_data['top'][i + k] for k in range(match_length))
+                    x_max = max(ocr_data['left'][i + k] + ocr_data['width'][i + k] for k in range(match_length))
+                    y_max = max(ocr_data['top'][i + k] + ocr_data['height'][i + k] for k in range(match_length))
+                    
+                    padding = 2
+                    x_min = max(0, x_min - padding)
+                    y_min = max(0, y_min - padding)
+                    x_max = min(width, x_max + padding)
+                    y_max = min(height, y_max + padding)
+                    logging.info(f"Redacting: {entity_text} ({entity['type']})")
+                    cv2.rectangle(mask, (x_min, y_min), (x_max, y_max), 255, -1)
+                    
+                    i += match_length - 1 
+            i += 1
+    
+    if mode == 'black':
+        image[mask > 0] = [0, 0, 0]
+    elif mode == 'white':
+        image[mask > 0] = [255, 255, 255]
+    elif mode == 'blur':
+        blurred = cv2.GaussianBlur(image, (21, 21), 0)
+        image = np.where(mask[:, :, None] > 0, blurred, image)
+    else:
+        raise ValueError("Invalid mode. Choose 'black', 'white', or 'blur'.")
+    
+    return image
+
+
+def detect_images(image, model):
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    pil_image = Image.fromarray(image_rgb)
+    
+    # Perform detection
+    results = model(pil_image)
+    
+    image_height, image_width = image.shape[:2]
+    max_area = (image_width * image_height) / 4  # Maximum allowed area for detection
+
+    image_regions = []
+    for result in results:
+        boxes = result.boxes.xyxy.cpu().numpy()
+        classes = result.boxes.cls.cpu().numpy()
+        confs = result.boxes.conf.cpu().numpy()
+        
+        for box, cls, conf in zip(boxes, classes, confs):
+            if conf > 0.1:
+                x1, y1, x2, y2 = box
+                box_width = x2 - x1
+                box_height = y2 - y1
+                box_area = box_width * box_height
+                
+                if box_area <= max_area:
+                    image_regions.append((int(x1), int(y1), int(box_width), int(box_height)))
+    
+    return image_regions
+
+# Function to detect and redact QR codes
+def detect_qr_codes(image):
+    # Ensure the image is in grayscale
+    if len(image.shape) == 3:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = image
+
+    # Detect QR codes
+    qr_codes = pyzbar.decode(gray)
+    qr_regions = []
+
+    for qr in qr_codes:
+        # Get the bounding box coordinates
+        x, y, w, h = qr.rect
+        qr_regions.append((x, y, w, h))
+        logging.info(f"QR code detected at ({x}, {y})")
+
+    if not qr_regions:
+        logging.info("No QR codes detected in the image")
+
+    return qr_regions
+
+# Function to detect and redact signatures
+def detect_signatures(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    edged = cv2.Canny(blurred, 50, 150)
+    
+    contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    signature_regions = []
+    
+    for cnt in contours:
+        x, y, w, h = cv2.boundingRect(cnt)
+        aspect_ratio = w / float(h)
+        if 0.2 < aspect_ratio < 5.0 and 1000 < cv2.contourArea(cnt) < 10000:
+            signature_regions.append((x, y, w, h))
+            logging.info(f"Signature detected at coordinates: ({x}, {y}, {w}, {h})")
+    
+    return signature_regions
+
+
+def draw_redaction_boxes(image, regions, mode='black'):
+    mask = np.zeros(image.shape[:2], dtype=np.uint8)
+    
+    for (x, y, w, h) in regions:
+        cv2.rectangle(mask, (x, y), (x + w, y + h), 255, -1)
+    
+    if mode == 'black':
+        image[mask > 0] = [0, 0, 0]
+    elif mode == 'white':
+        image[mask > 0] = [255, 255, 255]
+    elif mode == 'blur':
+        blurred = cv2.GaussianBlur(image, (21, 21), 0)
+        image = np.where(mask[:, :, None] > 0, blurred, image)
+    else:
+        raise ValueError("Invalid mode. Choose 'black', 'white', or 'blur'.")
+    
+    return image
+
+# Main function to process image with level-wise and custom redaction
+def main(image_path, output_path, model, redaction_level=1, mode="black"):
+    image = cv2.imread(image_path)
+    logging.info(f"Processing document: {image_path}")
+    ocr_data = perform_ocr(image)
+    text_content = ' '.join(ocr_data['text'])
+    sensitive_data = find_sensitive_data(text_content, redaction_level)
+    if redaction_level >= 1:
+        redacted_image = redact_sensitive_data(image.copy(), ocr_data, sensitive_data, mode)
+    if redaction_level >= 2:
+        qr_regions = detect_qr_codes(redacted_image)
+        redacted_image = draw_redaction_boxes(redacted_image, qr_regions, mode)
+
+        signature_regions = detect_signatures(redacted_image)
+        redacted_image = draw_redaction_boxes(redacted_image, signature_regions, mode)
+        image_regions = detect_images(redacted_image, model)
+        redacted_image = draw_redaction_boxes(redacted_image, image_regions, mode)
+    cv2.imwrite(output_path, redacted_image)
+    logging.info(f"Redacted image saved as {output_path}")
+
+
+if __name__ == "__main__":
+    model = YOLO('yolov8n.pt')
+    input_path = "input.jpg"
+    output_path = "output_redacted.jpg"
+    main(input_path, output_path, model, redaction_level=2, mode="blur")

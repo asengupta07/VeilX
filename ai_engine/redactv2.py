@@ -344,6 +344,27 @@ def custom_redact_text(pdf_doc, sensitive_data, level, mode):
             page.apply_redactions()
 
 
+def redact_images_in_pdf(pdf_doc, mode):
+    fill_colors = {"black": (0, 0, 0), "white": (1, 1, 1), "blur": (0.5, 0.5, 0.5)}
+
+    for page_num in range(pdf_doc.page_count):
+        page = pdf_doc[page_num]
+        image_list = page.get_images(full=True)
+        for img_index, img in enumerate(image_list):
+            xref = img[0]
+            rect = page.get_image_bbox(img)
+            logging.info(f"Redacting image on page {page_num + 1}")
+            page.add_redact_annot(rect, fill=fill_colors[mode])
+
+        page.apply_redactions()
+
+
+
+def save_redacted_pdf(pdf_doc, output_path):
+    pdf_doc.save(output_path, garbage=4, deflate=True, clean=True)
+    pdf_doc.close()
+
+
 def get_custom_sensitive_data(text, user_prompt):
     prompt = (
         "You are an advanced, highly adaptable text analysis tool. "
@@ -421,26 +442,6 @@ def get_custom_sensitive_data(text, user_prompt):
         logging.debug(f"Identified sensitive data: {data}")
 
     return sensitive_data
-
-
-def redact_images_in_pdf(pdf_doc, mode):
-    fill_colors = {"black": (0, 0, 0), "white": (1, 1, 1), "blur": (0.5, 0.5, 0.5)}
-
-    for page_num in range(pdf_doc.page_count):
-        page = pdf_doc[page_num]
-        image_list = page.get_images(full=True)
-        for img_index, img in enumerate(image_list):
-            xref = img[0]
-            rect = page.get_image_bbox(img)
-            logging.info(f"Redacting image on page {page_num + 1}")
-            page.add_redact_annot(rect, fill=fill_colors[mode])
-
-        page.apply_redactions()
-
-
-def save_redacted_pdf(pdf_doc, output_path):
-    pdf_doc.save(output_path, garbage=4, deflate=True, clean=True)
-    pdf_doc.close()
 
 
 def get_sensitive(input_pdf, level):
