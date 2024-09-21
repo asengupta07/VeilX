@@ -109,6 +109,7 @@ export default function DocumentPreviewPage() {
       });
       setIpfsUrl(uri);
       if (dbResponse.ok) {
+        alert("Stored document on IPFS successfully!");
         toast({
           title: "Success!",
           description:
@@ -209,6 +210,7 @@ export default function DocumentPreviewPage() {
           });
 
           if (dbResponse.ok) {
+            alert("Stored document in the database successfully!");
             toast({
               title: "Success!",
               description: "Stored document in the database successfully.",
@@ -306,37 +308,37 @@ export default function DocumentPreviewPage() {
                   <Button
                     onClick={handleStoreInDatabase}
                     className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                    disabled={!consentGiven || loading} // Disable when loading
+                    disabled={!consentGiven || loading}
                   >
                     {loading ? (
-                      <span className="loader"></span> // Loader indicator (replace with your preferred loader)
+                      <span className="loader"></span>
                     ) : (
                       "Store on Our Secure Database"
                     )}
                   </Button>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="mt-6 flex items-center space-x-2"
+                  >
+                    <Checkbox
+                      id="consent"
+                      checked={consentGiven}
+                      onCheckedChange={(checked: CheckedState) =>
+                        setConsentGiven(!!checked)
+                      }
+                    />
+                    <label
+                      htmlFor="consent"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      I consent to storing this document in the secure database and possible monitization of the data.
+                    </label>
+                  </motion.div>
                 </div>
               </motion.div>
             </div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="mt-6 flex items-center space-x-2"
-            >
-              <Checkbox
-                id="consent"
-                checked={consentGiven}
-                onCheckedChange={(checked: CheckedState) =>
-                  setConsentGiven(!!checked)
-                }
-              />
-              <label
-                htmlFor="consent"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                I consent to storing this document in the secure database
-              </label>
-            </motion.div>
           </CardContent>
           <CardFooter>
             <p className="text-sm text-purple-600 text-center w-full">
