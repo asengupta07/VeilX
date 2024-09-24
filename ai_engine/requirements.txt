@@ -11,3 +11,6 @@ pytesseract
 python-dotenv
 Requests
 ultralytics
+paddlepaddle
+paddleocr
+pyzbar
