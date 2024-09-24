@@ -13,3 +13,4 @@ Requests
 ultralytics
 paddlepaddle
 paddleocr
+pyzbar
