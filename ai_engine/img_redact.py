@@ -14,29 +14,33 @@ import os
 
 load_dotenv()
 
-pytesseract.pytesseract.tesseract_cmd = ( r'/usr/bin/tesseract' )
-# Set up logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+pytesseract.pytesseract.tesseract_cmd = r"/usr/bin/tesseract"
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 API_KEY = os.getenv("API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 genai.configure(api_key=GOOGLE_API_KEY)
 
+
 def perform_ocr(image):
-    # Convert OpenCV image to PIL Image
     pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-    ocr_data = pytesseract.image_to_data(pil_image, output_type=pytesseract.Output.DICT, lang='eng')
+    ocr_data = pytesseract.image_to_data(
+        pil_image, output_type=pytesseract.Output.DICT, lang="eng"
+    )
     return ocr_data
 
 
 def extract_json(response_text):
-    # Regex to detect and extract JSON from the response
     try:
         json_data = json.loads(response_text)
         return json_data
     except json.JSONDecodeError:
-        json_pattern = re.search(r'```(JSON|json)?\s*(.*?)```', response_text, re.DOTALL)
+        json_pattern = re.search(
+            r"```(JSON|json)?\s*(.*?)```", response_text, re.DOTALL
+        )
         if json_pattern:
             json_string = json_pattern.group(2)
             try:
@@ -50,7 +54,7 @@ def extract_json(response_text):
 
 def get_gemini_response(prompt):
     try:
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel("gemini-pro")
         safety_settings = [
             {
                 "category": "HARM_CATEGORY_HARASSMENT",
@@ -75,6 +79,7 @@ def get_gemini_response(prompt):
         logging.error(f"Error in Gemini API call: {str(e)}")
         return None
 
+
 def find_sensitive_data(text):
     prompt = (
         "You are a powerful text analysis tool designed to identify all potentially sensitive, personally identifiable, or traceable information in text. "
@@ -94,12 +99,12 @@ def find_sensitive_data(text):
         "Please list each identified item in the following JSON format:\n\n"
         "[\n"
         "    {\n"
-        "        \"type\": \"Name\",\n"
-        "        \"text\": \"John Doe\"\n"
+        '        "type": "Name",\n'
+        '        "text": "John Doe"\n'
         "    },\n"
         "    {\n"
-        "        \"type\": \"URL\",\n"
-        "        \"text\": \"https://example.com\"\n"
+        '        "type": "URL",\n'
+        '        "text": "https://example.com"\n'
         "    }\n"
         "    // Add ALL identified items\n"
         "]\n\n"
@@ -110,12 +115,11 @@ def find_sensitive_data(text):
 
     data = {"messages": [{"role": "user", "content": prompt}]}
 
-    headers = {
-        "Content-Type": "application/json",
-        "apiKey": API_KEY
-    }
+    headers = {"Content-Type": "application/json", "apiKey": API_KEY}
 
-    response = requests.post('https://api.jabirproject.org/generate', json=data, headers=headers)
+    response = requests.post(
+        "https://api.jabirproject.org/generate", json=data, headers=headers
+    )
     if response.status_code == 200:
         entities_json = response.json().get("result", {}).get("content", "")
         try:
@@ -124,7 +128,9 @@ def find_sensitive_data(text):
             logging.error("Error: Unable to parse JSON response from Jabir API")
             entities = None
     else:
-        logging.error(f"Error in Jabir API call: {response.status_code} - {response.text}")
+        logging.error(
+            f"Error in Jabir API call: {response.status_code} - {response.text}"
+        )
         entities = None
 
     if entities is None:
@@ -142,63 +148,73 @@ def find_sensitive_data(text):
 
     sensitive_data = []
 
-    # Processing entities returned by the API
     for entity in entities:
-        item_text = entity['text']
-        if len(item_text) <= 1:  # Skip single characters
+        item_text = entity["text"]
+        if len(item_text) <= 1:
             continue
-        if item_text.lower() in ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for']:  # Skip common words
+        if item_text.lower() in [
+            "the",
+            "a",
+            "an",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+        ]:
             continue
-        sensitive_data.append({
-            "type": entity['type'],
-            "text": item_text
-        })
+        sensitive_data.append({"type": entity["type"], "text": item_text})
 
-    # Additional regex patterns for URLs and potential identifiers
-    url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
-    identifier_pattern = re.compile(r'\b(?:[A-Z0-9]{8,}|[A-Z]{2,}\d+|\d+[A-Z]{2,})\b')
+    url_pattern = re.compile(
+        r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+    )
+    identifier_pattern = re.compile(r"\b(?:[A-Z0-9]{8,}|[A-Z]{2,}\d+|\d+[A-Z]{2,})\b")
 
-    # Adding URLs detected by regex
     for match in url_pattern.finditer(text):
-        sensitive_data.append({
-            "type": "URL",
-            "text": match.group()
-        })
+        sensitive_data.append({"type": "URL", "text": match.group()})
 
-    # Adding potential identifiers detected by regex
     for match in identifier_pattern.finditer(text):
-        sensitive_data.append({
-            "type": "Potential Identifier",
-            "text": match.group()
-        })
+        sensitive_data.append({"type": "Potential Identifier", "text": match.group()})
 
-    # Return the final result in the required JSON format
     return sensitive_data
+
 
 def redact_sensitive_data(image, ocr_data, sensitive_data):
     height, width = image.shape[:2]
     mask = np.zeros((height, width), dtype=np.uint8)
 
     for entity in sensitive_data:
-        entity_text = entity['text'].lower()
+        entity_text = entity["text"].lower()
         entity_words = entity_text.split()
-        
+
         i = 0
-        while i < len(ocr_data['text']):
-            if ocr_data['text'][i].lower() == entity_words[0]:
+        while i < len(ocr_data["text"]):
+            if ocr_data["text"][i].lower() == entity_words[0]:
                 match_length = 1
                 for j in range(1, len(entity_words)):
-                    if i + j < len(ocr_data['text']) and ocr_data['text'][i + j].lower() == entity_words[j]:
+                    if (
+                        i + j < len(ocr_data["text"])
+                        and ocr_data["text"][i + j].lower() == entity_words[j]
+                    ):
                         match_length += 1
                     else:
                         break
-                
+
                 if match_length == len(entity_words):
-                    x_min = min(ocr_data['left'][i + k] for k in range(match_length))
-                    y_min = min(ocr_data['top'][i + k] for k in range(match_length))
-                    x_max = max(ocr_data['left'][i + k] + ocr_data['width'][i + k] for k in range(match_length))
-                    y_max = max(ocr_data['top'][i + k] + ocr_data['height'][i + k] for k in range(match_length))
-                    
+                    x_min = min(ocr_data["left"][i + k] for k in range(match_length))
+                    y_min = min(ocr_data["top"][i + k] for k in range(match_length))
+                    x_max = max(
+                        ocr_data["left"][i + k] + ocr_data["width"][i + k]
+                        for k in range(match_length)
+                    )
+                    y_max = max(
+                        ocr_data["top"][i + k] + ocr_data["height"][i + k]
+                        for k in range(match_length)
+                    )
+
                     padding = 2
                     x_min = max(0, x_min - padding)
                     y_min = max(0, y_min - padding)
@@ -206,41 +222,42 @@ def redact_sensitive_data(image, ocr_data, sensitive_data):
                     y_max = min(height, y_max + padding)
                     logging.info(f"Redacting: {entity_text} ({entity['type']})")
                     cv2.rectangle(mask, (x_min, y_min), (x_max, y_max), 255, -1)
-                    
-                    i += match_length - 1 
+
+                    i += match_length - 1
             i += 1
-    
-    image[mask > 0] = [0, 0, 0] 
-    
+
+    image[mask > 0] = [0, 0, 0]
+
     return image
 
+
 def detect_images(image, model):
-    # Convert BGR to RGB
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     pil_image = Image.fromarray(image_rgb)
-    
-    # Perform detection
+
     results = model(pil_image)
-    
+
     image_height, image_width = image.shape[:2]
-    max_area = (image_width * image_height) / 4  # Maximum allowed area for detection
+    max_area = (image_width * image_height) / 4
 
     image_regions = []
     for result in results:
         boxes = result.boxes.xyxy.cpu().numpy()
         classes = result.boxes.cls.cpu().numpy()
         confs = result.boxes.conf.cpu().numpy()
-        
+
         for box, cls, conf in zip(boxes, classes, confs):
             if conf > 0.1:
                 x1, y1, x2, y2 = box
                 box_width = x2 - x1
                 box_height = y2 - y1
                 box_area = box_width * box_height
-                
+
                 if box_area <= max_area:
-                    image_regions.append((int(x1), int(y1), int(box_width), int(box_height)))
-    
+                    image_regions.append(
+                        (int(x1), int(y1), int(box_width), int(box_height))
+                    )
+
     return image_regions
 
 
@@ -248,7 +265,7 @@ def detect_qr_codes(image):
     qr_detector = cv2.QRCodeDetector()
     data, bbox, _ = qr_detector.detectAndDecode(image)
     qr_regions = []
-    
+
     if bbox is not None:
         for i in range(len(bbox)):
             x_min = int(bbox[i][0][0])
@@ -257,37 +274,40 @@ def detect_qr_codes(image):
             y_max = int(bbox[(i + 1) % len(bbox)][0][1])
             qr_regions.append((x_min, y_min, x_max - x_min, y_max - y_min))
             logging.info(f"QR code detected and redacted")
-    
+
     return qr_regions
+
 
 def detect_signatures(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     edged = cv2.Canny(blurred, 50, 150)
-    
+
     contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     signature_regions = []
-    
+
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
         aspect_ratio = w / float(h)
-        if 0.2 < aspect_ratio < 5.0 and 1000 < cv2.contourArea(cnt) < 10000:  # You can adjust these thresholds
+        if 0.2 < aspect_ratio < 5.0 and 1000 < cv2.contourArea(cnt) < 10000:
             signature_regions.append((x, y, w, h))
             logging.info(f"Signature detected at coordinates: ({x}, {y}, {w}, {h})")
-    
+
     return signature_regions
+
 
 def redact_images(image, image_regions):
     redacted = image.copy()
-    for (x, y, w, h) in image_regions:
+    for x, y, w, h in image_regions:
         logging.info(f"Redacting image at coordinates: ({x}, {y}, {w}, {h})")
-        
+
         x, y = max(0, x), max(0, y)
         w = min(w, image.shape[1] - x)
         h = min(h, image.shape[0] - y)
-        redacted[y:y+h, x:x+w] = (0, 0, 0)
-        
+        redacted[y : y + h, x : x + w] = (0, 0, 0)
+
     return redacted
+
 
 def redactImg(input_image, output_image):
     image = cv2.imread(input_image)
@@ -295,10 +315,10 @@ def redactImg(input_image, output_image):
         logging.error(f"Failed to load image: {input_image}")
         return
 
-    model = YOLO('yolov5su.pt')
+    model = YOLO("yolov5su.pt")
 
     ocr_data = perform_ocr(image)
-    full_text = ' '.join(ocr_data['text'])
+    full_text = " ".join(ocr_data["text"])
 
     sensitive_data = find_sensitive_data(full_text)
     redacted_text_image = redact_sensitive_data(image, ocr_data, sensitive_data)
@@ -313,6 +333,7 @@ def redactImg(input_image, output_image):
 
     cv2.imwrite(output_image, final_redacted_image)
     logging.info(f"Redacted image saved as {output_image}")
+
 
 if __name__ == "__main__":
     input_image = "input.jpg"
