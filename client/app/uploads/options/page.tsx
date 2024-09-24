@@ -215,7 +215,7 @@ export default function ChooseRedactionPage() {
             {originalFileUrl && (
               <div className="w-1/2">
                 <h3 className="text-lg font-semibold mb-2">Original File:</h3>
-                {originalFileUrl.includes("image") ? (
+                {originalFileUrl.includes("arnabkimummy") ? (
                   <img
                     src={originalFileUrl}
                     alt="Original file"

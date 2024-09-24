@@ -69,19 +69,16 @@ export default function PurpleUploadPage() {
     try {
       if (redactionMode === "level") {
         formData.append("level", redactionDegree.toString());
-        const slug = fileType === "pdf" ? "sensitive" : "redactimg";
+        const slug = fileType === "pdf" ? "sensitive" : "imgsens";
         response = await axios.post(`http://127.0.0.1:5000/${slug}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       } else {
         formData.append("prompt", customPrompt);
-        response = await axios.post(
-          "http://127.0.0.1:5000/customsens",
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-          }
-        );
+        const slug = fileType === "pdf" ? "customsens" : "imgsenscust";
+        response = await axios.post(`http://127.0.0.1:5000/${slug}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
         localStorage.setItem("imagesRedacted", imagesRedacted ? "1" : "0");
       }
 
@@ -89,10 +86,12 @@ export default function PurpleUploadPage() {
       if (contentType && contentType.includes("application/json")) {
         let data = response.data;
         data.fileType = fileType;
-        let cat = await axios.post("http://127.0.0.1:5000/getcat", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        data.fileCategory = cat.data.category;
+        if (fileType === "pdf") {
+          let cat = await axios.post("http://127.0.0.1:5000/getcat", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+          data.fileCategory = cat.data.category;
+        }
         const jsonData = JSON.stringify(data);
         const originalBlob = new Blob([file], { type: file.type }); // file has type File | null, so `file?.type` is safer
         const originalUrl = URL.createObjectURL(originalBlob);
