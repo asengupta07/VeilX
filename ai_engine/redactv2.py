@@ -25,26 +25,24 @@ genai.configure(api_key=GOOGLE_API_KEY)
 
 def add_txn(input_pdf, output_pdf, txn=None):
     doc = fitz.open(input_pdf)
-    
+
     if txn:
         transaction_hash = f"Signed using hash: {txn}"
     else:
         transaction_hash = f"Signed using hash: {hashlib.sha256(str(random.random()).encode()).hexdigest()[:16]}"
-    
-    font_size = 8 
-    
+
+    font_size = 8
+
     for page in doc:
         page_height = page.rect.height
         hash_height = font_size
-        
+
         margin_x = 10
         margin_y = 10
         x = margin_x
         y = page_height - hash_height - margin_y
-        
-        page.insert_text(
-            (x, y), transaction_hash, fontsize=font_size, color=(0, 0, 0)
-        )
+
+        page.insert_text((x, y), transaction_hash, fontsize=font_size, color=(0, 0, 0))
 
     doc.save(output_pdf)
     doc.close()
@@ -357,7 +355,6 @@ def redact_images_in_pdf(pdf_doc, mode):
             page.add_redact_annot(rect, fill=fill_colors[mode])
 
         page.apply_redactions()
-
 
 
 def save_redacted_pdf(pdf_doc, output_path):

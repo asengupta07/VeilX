@@ -13,11 +13,12 @@ load_dotenv()
 API_KEY = os.getenv("API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
-# Configure Gemini
 genai.configure(api_key=GOOGLE_API_KEY)
+
 
 def extract_text_from_pdf(pdf_path):
     doc = fitz.open(pdf_path)
@@ -29,12 +30,13 @@ def extract_text_from_pdf(pdf_path):
 
 
 def extract_json(response_text):
-    # Regex to detect and extract JSON from the response
     try:
         json_data = json.loads(response_text)
         return json_data
     except json.JSONDecodeError:
-        json_pattern = re.search(r'```(JSON|json)?\s*(.*?)```', response_text, re.DOTALL)
+        json_pattern = re.search(
+            r"```(JSON|json)?\s*(.*?)```", response_text, re.DOTALL
+        )
         if json_pattern:
             json_string = json_pattern.group(2)
             try:
@@ -48,7 +50,7 @@ def extract_json(response_text):
 
 def get_gemini_response(prompt):
     try:
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel("gemini-pro")
         safety_settings = [
             {
                 "category": "HARM_CATEGORY_HARASSMENT",
@@ -73,6 +75,7 @@ def get_gemini_response(prompt):
         logging.error(f"Error in Gemini API call: {str(e)}")
         return None
 
+
 def find_sensitive_data(text):
     prompt = (
         "You are a powerful text analysis tool designed to identify all potentially sensitive, personally identifiable, or traceable information in text. "
@@ -92,12 +95,12 @@ def find_sensitive_data(text):
         "Please list each identified item in the following JSON format:\n\n"
         "[\n"
         "    {\n"
-        "        \"type\": \"Name\",\n"
-        "        \"text\": \"John Doe\"\n"
+        '        "type": "Name",\n'
+        '        "text": "John Doe"\n'
         "    },\n"
         "    {\n"
-        "        \"type\": \"URL\",\n"
-        "        \"text\": \"https://example.com\"\n"
+        '        "type": "URL",\n'
+        '        "text": "https://example.com"\n'
         "    }\n"
         "    // Add ALL identified items\n"
         "]\n\n"
@@ -105,15 +108,14 @@ def find_sensitive_data(text):
         "Provide your comprehensive analysis based on these instructions. Only return the JSON.\n\n"
         f"Text to analyze:\n{text}"
     )
-    
+
     data = {"messages": [{"role": "user", "content": prompt}]}
 
-    headers = {
-        "Content-Type": "application/json",
-        "apiKey": API_KEY
-    }
+    headers = {"Content-Type": "application/json", "apiKey": API_KEY}
 
-    response = requests.post('https://api.jabirproject.org/generate', json=data, headers=headers)
+    response = requests.post(
+        "https://api.jabirproject.org/generate", json=data, headers=headers
+    )
     if response.status_code == 200:
         entities_json = response.json().get("result", {}).get("content", "")
         print(entities_json)
@@ -123,7 +125,9 @@ def find_sensitive_data(text):
             logging.error("Error: Unable to parse JSON response from Jabir API")
             entities = None
     else:
-        logging.error(f"Error in Jabir API call: {response.status_code} - {response.text}")
+        logging.error(
+            f"Error in Jabir API call: {response.status_code} - {response.text}"
+        )
         entities = None
 
     if entities is None:
@@ -142,11 +146,23 @@ def find_sensitive_data(text):
 
     sensitive_data = []
     for entity in entities:
-        item_text = entity['text']
-        if len(item_text) <= 1:  # Skip single characters
+        item_text = entity["text"]
+        if len(item_text) <= 1:
             logging.warning(f"Skipping single character: {item_text}")
             continue
-        if item_text.lower() in ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for']:  # Skip common words
+        if item_text.lower() in [
+            "the",
+            "a",
+            "an",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+        ]:
             logging.warning(f"Skipping common word: {item_text}")
             continue
         start = 0
@@ -155,45 +171,50 @@ def find_sensitive_data(text):
             if start == -1:
                 break
             end = start + len(item_text)
-            sensitive_data.append((item_text, start, end, entity['type']))
+            sensitive_data.append((item_text, start, end, entity["type"]))
             start = end
 
-    # Additional regex patterns for URLs and potential identifiers
-    url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
-    identifier_pattern = re.compile(r'\b(?:[A-Z0-9]{8,}|[A-Z]{2,}\d+|\d+[A-Z]{2,})\b')
+    url_pattern = re.compile(
+        r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+    )
+    identifier_pattern = re.compile(r"\b(?:[A-Z0-9]{8,}|[A-Z]{2,}\d+|\d+[A-Z]{2,})\b")
 
     for match in url_pattern.finditer(text):
         sensitive_data.append((match.group(), match.start(), match.end(), "URL"))
 
     for match in identifier_pattern.finditer(text):
-        sensitive_data.append((match.group(), match.start(), match.end(), "Potential Identifier"))
+        sensitive_data.append(
+            (match.group(), match.start(), match.end(), "Potential Identifier")
+        )
 
-    # Log all identified sensitive data
     for data in sensitive_data:
         logging.debug(f"Identified sensitive data: {data}")
 
     return sensitive_data
 
+
 def redact_text_in_pdf(pdf_doc, sensitive_data):
     for page_num in range(pdf_doc.page_count):
         page = pdf_doc[page_num]
         for data, start, end, data_type in sensitive_data:
-            # Redact the full sensitive data
             instances = page.search_for(data, quads=True)
             for inst in instances:
-                logging.info(f"Redacting full text on page {page_num + 1}: {data} ({data_type})")
+                logging.info(
+                    f"Redacting full text on page {page_num + 1}: {data} ({data_type})"
+                )
                 page.add_redact_annot(inst, fill=(1, 1, 1))
 
-            # Split the data into words and redact each word
             words = data.split()
             for word in words:
                 word_instances = page.search_for(word, quads=True)
                 for word_inst in word_instances:
-                    logging.info(f"Redacting word on page {page_num + 1}: {word} ({data_type})")
+                    logging.info(
+                        f"Redacting word on page {page_num + 1}: {word} ({data_type})"
+                    )
                     page.add_redact_annot(word_inst, fill=(1, 1, 1))
 
-        # Apply redactions for this page
         page.apply_redactions()
+
 
 def redact_images_in_pdf(pdf_doc):
     for page_num in range(pdf_doc.page_count):
@@ -202,17 +223,16 @@ def redact_images_in_pdf(pdf_doc):
         for img_index, img in enumerate(image_list):
             xref = img[0]
             rect = page.get_image_bbox(img)
-            # Log each image redaction
             logging.info(f"Redacting image on page {page_num + 1}")
-            # Create a black rectangle to cover the image
-            page.add_redact_annot(rect, fill=(1,1,1))
-        
-        # Apply redactions for this page
+            page.add_redact_annot(rect, fill=(1, 1, 1))
+
         page.apply_redactions()
+
 
 def save_redacted_pdf(pdf_doc, output_path):
     pdf_doc.save(output_path, garbage=4, deflate=True, clean=True)
     pdf_doc.close()
+
 
 def redact(input_pdf, output_pdf):
     text, pdf_doc = extract_text_from_pdf(input_pdf)
@@ -221,6 +241,7 @@ def redact(input_pdf, output_pdf):
     redact_images_in_pdf(pdf_doc)
     save_redacted_pdf(pdf_doc, output_pdf)
     logging.info(f"Redacted PDF saved as {output_pdf}")
+
 
 if __name__ == "__main__":
     input_pdf = "input5.pdf"
