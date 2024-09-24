@@ -92,7 +92,9 @@ export default function ChooseRedactionPage() {
         }, {} as GroupedOptions);
 
         setGroupedOptions(grouped);
-        renderAnnotatedPdf(parsedData.annotated_pdf);
+        if (parsedData.annotated_pdf)
+          renderAnnotatedPdf(parsedData.annotated_pdf);
+        else renderAnnotatedPdf(parsedData.annotated_img);
       } catch (error) {
         console.error("Error decoding or parsing JSON data:", error);
         setError("Failed to load redaction options. Please try again.");
@@ -184,6 +186,7 @@ export default function ChooseRedactionPage() {
   };
 
   const renderAnnotatedPdf = async (filename: string) => {
+    console.log("Annotated PDF Filename:", filename);
     try {
       const response = await axios.get(`http://127.0.0.1:5000${filename}`, {
         responseType: "blob",
@@ -191,6 +194,7 @@ export default function ChooseRedactionPage() {
       const contentType = response.headers["content-type"];
       const blob = new Blob([response.data], { type: contentType });
       const url = URL.createObjectURL(blob);
+      console.log("Annotated PDF Blob URL:", url);
       setAnnotatedBlobUrl(url);
       console.log("Annotated PDF URL:", url);
     } catch (error) {
