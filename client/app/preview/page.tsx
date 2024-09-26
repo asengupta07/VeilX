@@ -54,9 +54,10 @@ export default function DocumentPreviewPage() {
 
             // Add the redactImages value to the data object
             data.image = redactImages === "1" ? "1" : "0";
+            let slug = data.fileType === "pdf" ? "customrv2" : "redactimgcustv2";
 
             const response = await axios.post(
-              "http://127.0.0.1:5000/customrv2",
+              `http://127.0.0.1:5000/${slug}`,
               data,
               {
                 headers: {
@@ -65,8 +66,8 @@ export default function DocumentPreviewPage() {
                 responseType: "blob",
               }
             );
-
-            const blob = new Blob([response.data], { type: "application/pdf" });
+            const contentType = response.headers["content-type"];
+            const blob = new Blob([response.data], { type: contentType });
             const url = URL.createObjectURL(blob);
             setRedactedFileUrl(url);
           } catch (error) {
@@ -84,8 +85,9 @@ export default function DocumentPreviewPage() {
     if (originalFileUrl) {
       const response = await fetch(originalFileUrl);
       const blob = await response.blob();
-
-      const file = new File([blob], "original_document.pdf", {
+      const contentType = response.headers.get("content-type");
+      const extension = contentType?.split("/")[1];
+      const file = new File([blob], `original.${extension}`, {
         type: blob.type,
       });
       const uri = await upload({
@@ -153,7 +155,9 @@ export default function DocumentPreviewPage() {
         const blob = await response.blob();
 
         // Step 3: Create a File object to send with the form
-        const file = new File([blob], "redacted_document.pdf", {
+        const fileType = response.headers.get("content-type");
+        const extension = fileType?.split("/")[1];
+        const file = new File([blob], `redacted.${extension}`, {
           type: blob.type,
         });
 

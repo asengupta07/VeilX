@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import easyocr
 import json
 import requests
 import logging
@@ -85,23 +84,56 @@ def get_gemini_response(prompt):
         return None
 
 
-def perform_ocr(image):
-    rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    ocr_results = ocr.ocr(rgb_image)
-    ocr_data = {"left": [], "top": [], "width": [], "height": [], "text": []}
-    for page in ocr_results:
-        for block in page:
-            ocr_data["text"].append(block[1][0])
-            bbox = block[0]
-            x1, y1 = bbox[0]
-            x2, y2 = bbox[2]
-            width, height = abs(x2 - x1), abs(y2 - y1)
-            ocr_data["left"].append(int(x1))
-            ocr_data["top"].append(int(y1))
-            ocr_data["width"].append(int(width))
-            ocr_data["height"].append(int(height))
+def perform_ocr(image, attempts=3, max_retries=10):
+    def ocr_attempt(img):
+        rgb_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        ocr_results = ocr.ocr(rgb_image)
+        ocr_data = {"left": [], "top": [], "width": [], "height": [], "text": []}
+        total_text = ""
+        for page in ocr_results:
+            for block in page:
+                text = block[1][0]
+                ocr_data["text"].append(text)
+                total_text += text
+                bbox = block[0]
+                x1, y1 = bbox[0]
+                x2, y2 = bbox[2]
+                width, height = abs(x2 - x1), abs(y2 - y1)
+                ocr_data["left"].append(int(x1))
+                ocr_data["top"].append(int(y1))
+                ocr_data["width"].append(int(width))
+                ocr_data["height"].append(int(height))
+        return ocr_data, len(total_text)
 
-    return ocr_data
+    best_result = None
+    max_text_length = 0
+    successful_attempts = 0
+    total_attempts = 0
+
+    while successful_attempts < attempts and total_attempts < max_retries:
+        try:
+            result, text_length = ocr_attempt(image)
+            successful_attempts += 1
+            total_attempts += 1
+
+            if text_length > max_text_length:
+                best_result = result
+                max_text_length = text_length
+        except RuntimeError as e:
+            print(f"RuntimeError occurred: {e}. Retrying...")
+            total_attempts += 1
+
+        if successful_attempts < attempts and total_attempts >= max_retries:
+            print(
+                f"Warning: Only completed {successful_attempts} successful attempts out of {attempts} desired."
+            )
+
+    if best_result:
+        print(" ".join(best_result["text"]))
+    else:
+        print("No successful OCR attempts were made.")
+
+    return best_result
 
 
 def find_sensitive_data(text, level):
@@ -504,7 +536,7 @@ def get_sens(image_path, redaction_level=1):
     ocr_data = perform_ocr(image)
     text_content = " ".join(ocr_data["text"])
     sensitive_data = find_sensitive_data(text_content, redaction_level)
-    return sensitive_data
+    return sensitive_data, ocr_data
 
 
 def get_sens_cust(image_path, prompt):
@@ -512,7 +544,7 @@ def get_sens_cust(image_path, prompt):
     ocr_data = perform_ocr(image)
     text_content = " ".join(ocr_data["text"])
     sensitive_data = find_sensitive_data_cust(text_content, prompt)
-    return sensitive_data
+    return sensitive_data, ocr_data
 
 
 def get_redacted_image(
@@ -522,10 +554,12 @@ def get_redacted_image(
     redaction_level=1,
     mode="black",
     sensitive_data=None,
+    ocr_data=None,
 ):
     model = YOLO("yolov8n.pt")
     image = cv2.imread(image_path)
-    ocr_data = perform_ocr(image)
+    if ocr_data is None:
+        ocr_data = perform_ocr(image)
     redacted_image = redact_sensitive_data(image.copy(), ocr_data, sensitive_data, mode)
     if redaction_level > 1:
         qr_regions = detect_qr_codes(redacted_image)
@@ -548,11 +582,13 @@ def get_redacted_image_cust(
     image=False,
     mode="black",
     sensitive_data=None,
+    ocr_data=None,
 ):
-    model = YOLO(model)
-    image = cv2.imread(image_path)
-    ocr_data = perform_ocr(image)
-    redacted_image = redact_sensitive_data(image.copy(), ocr_data, sensitive_data, mode)
+    model = YOLO("yolov8n.pt")
+    img = cv2.imread(image_path)
+    if ocr_data is None:
+        ocr_data = perform_ocr(img)
+    redacted_image = redact_sensitive_data(img.copy(), ocr_data, sensitive_data, mode)
     if image:
         qr_regions = detect_qr_codes(redacted_image)
         redacted_image = draw_redaction_boxes(redacted_image, qr_regions, mode)
@@ -568,7 +604,7 @@ def get_redacted_image_cust(
 
 
 def annotate(image, sensitive_data):
-    draw = ImageDraw.Draw(image)
+    draw = ImageDraw.Draw(image, "RGBA")
     font = ImageFont.load_default()
 
     ocr_data = perform_ocr(np.array(image))
@@ -583,7 +619,7 @@ def annotate(image, sensitive_data):
 
                 logging.info(f"Annotating '{text}' as {type_}")
 
-                draw.rectangle([x, y, x + w, y + h], fill=(255, 255, 0, 128))
+                draw.rectangle([x, y, x + w, y + h], fill=(255, 255, 0, 64))
                 draw.text((x, y - 15), f"{type_}", fill=(255, 0, 0), font=font)
 
 

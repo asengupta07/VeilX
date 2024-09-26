@@ -56,6 +56,7 @@ export default function ChooseRedactionPage() {
     doc: string;
     sensitive: SensitiveInfo[];
     annotated_pdf: string;
+    fileType: string;
   } | null>(null);
   const [annotatedBlobUrl, setAnnotatedBlobUrl] = useState<string | null>(null);
   const [level, setLevel] = useState<string>("");
@@ -126,6 +127,8 @@ export default function ChooseRedactionPage() {
       });
     }
   };
+  
+  console.log("data", jsonData);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,9 +150,9 @@ export default function ChooseRedactionPage() {
       const filteredSensitiveInfo = jsonData?.sensitive.filter((item) =>
         selectedTexts.includes(item.text)
       );
-
+      let slug = jsonData?.fileType === "pdf" ? "redactv2" : "redactimgv4";
       const response = await axios.post(
-        "http://127.0.0.1:5000/redactv2",
+        `http://127.0.0.1:5000/${slug}`,
         {
           doc: jsonData?.doc,
           sensitive: filteredSensitiveInfo,
@@ -219,18 +222,10 @@ export default function ChooseRedactionPage() {
             {originalFileUrl && (
               <div className="w-1/2">
                 <h3 className="text-lg font-semibold mb-2">Original File:</h3>
-                {originalFileUrl.includes("arnabkimummy") ? (
-                  <img
-                    src={originalFileUrl}
-                    alt="Original file"
-                    className="max-w-full h-auto"
-                  />
-                ) : (
                   <iframe
                     src={originalFileUrl}
                     className="w-full h-64 border-2 border-purple-500"
                   ></iframe>
-                )}
               </div>
             )}
             {annotatedBlobUrl && (

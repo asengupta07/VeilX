@@ -225,17 +225,25 @@ def redactimgcustv2():
     data = request.json
     sensitive = data["sensitive"]
     doc = data["doc"]
+    ocr = data["ocr"]
+    print(ocr)
 
     image = True if int(data["image"]) == 1 else False
 
     in_path = f"temp/{doc}"
     out_path = f"temp/redacted_{doc}"
-    sens = []
-    for sen in sensitive:
-        tup = (sen["text"], sen["start"], sen["end"], sen["type"])
-        sens.append(tup)
+    # sens = []
+    # for sen in sensitive:
+    #     tup = (sen["text"], sen["start"], sen["end"], sen["type"])
+    #     sens.append(tup)
 
-    get_redacted_image_cust_v2(in_path, sens, out_path, image)
+    get_redacted_image_cust_v2(
+        image_path=in_path,
+        sensitive_data=sensitive,
+        output_path=out_path,
+        image=image,
+        ocr_data=ocr,
+    )
 
     resp = send_file(out_path, as_attachment=True, download_name=f"redacted_{doc}")
 
@@ -277,6 +285,8 @@ def redactimgv4():
     doc = data["doc"]
     level = int(data["level"])
     mode = data["mode"]
+    ocr = data["ocr"]
+    print(ocr)
 
     in_path = f"temp/{doc}"
     out_path = f"temp/redacted_{doc}"
@@ -287,6 +297,7 @@ def redactimgv4():
         output_path=out_path,
         redaction_level=level,
         mode=mode,
+        ocr_data=ocr,
     )
 
     resp = send_file(out_path, as_attachment=True, download_name=f"redacted_{doc}")
@@ -387,7 +398,7 @@ def imgsensv2():
 
     doc.save(in_path)
 
-    sensitive = get_sens_v2(in_path, level)
+    sensitive, ocr = get_sens_v2(in_path, level)
 
     process_annot_v2(in_path, sensitive, annot_path)
 
@@ -404,6 +415,7 @@ def imgsensv2():
         {
             "doc": doc.filename,
             "sensitive": resp,
+            "ocr": ocr,
             "annotated_img": f"/download_annotated/{doc.filename}",
         }
     )
@@ -426,7 +438,7 @@ def imgsenscustv2():
 
     doc.save(in_path)
 
-    sensitive = get_sens_cust_v2(in_path, prompt)
+    sensitive, ocr = get_sens_cust_v2(in_path, prompt)
     resp = []
     for sens in sensitive:
         li = {}
@@ -442,6 +454,7 @@ def imgsenscustv2():
         {
             "doc": doc.filename,
             "sensitive": resp,
+            "ocr": ocr,
             "annotated_pdf": f"/download_annotated/{doc.filename}",
         }
     )

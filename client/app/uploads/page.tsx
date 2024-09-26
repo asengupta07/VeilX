@@ -69,13 +69,13 @@ export default function PurpleUploadPage() {
     try {
       if (redactionMode === "level") {
         formData.append("level", redactionDegree.toString());
-        const slug = fileType === "pdf" ? "sensitive" : "imgsens";
+        const slug = fileType === "pdf" ? "sensitive" : "imgsensv2";
         response = await axios.post(`http://127.0.0.1:5000/${slug}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       } else {
         formData.append("prompt", customPrompt);
-        const slug = fileType === "pdf" ? "customsens" : "imgsenscust";
+        const slug = fileType === "pdf" ? "customsens" : "imgsenscustv2";
         response = await axios.post(`http://127.0.0.1:5000/${slug}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
