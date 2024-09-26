@@ -167,8 +167,9 @@ export default function DocumentPreviewPage() {
         formData.append("txn", transactionHash);
 
         // Step 5: Make a POST request to the /addtxn API endpoint
+        let slug = extension === "pdf" ? "addtxn" : "signimg";
         const apiResponse = await axios.post(
-          "http://127.0.0.1:5000/addtxn",
+          `http://127.0.0.1:5000/${slug}`,
           formData,
           {
             responseType: "blob",

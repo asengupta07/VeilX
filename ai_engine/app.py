@@ -16,7 +16,8 @@ from img_redactv4 import (
     get_redacted_image as get_redacted_image_v2,
     get_redacted_image_cust as get_redacted_image_cust_v2,
     process_annot as process_annot_v2,
-    perform_ocr as perform_ocr_v2,
+    sign_image,
+    # perform_ocr as perform_ocr_v2,
 )
 from img_redact import redactImg
 from redactv2 import (
@@ -52,6 +53,31 @@ def ocrtest():
     text = perform_ocr(in_path)
 
     return jsonify({"text": text})
+
+
+@app.route("/signimg", methods=["POST"])
+def signimg():
+    if "file" not in request.files:
+        return "No file part", 400
+
+    doc = request.files["file"]
+    txn = request.form["txn"]
+
+    if doc.filename == "":
+        return "No selected file", 400
+
+    in_path = f"temp/{doc.filename}"
+    out_path = f"temp/signed_{doc.filename}"
+
+    doc.save(in_path)
+
+    sign_image(in_path, out_path, txn=txn)
+
+    resp = send_file(
+        out_path, as_attachment=True, download_name=f"signed_{doc.filename}"
+    )
+
+    return resp
 
 
 @app.route("/addtxn", methods=["POST"])

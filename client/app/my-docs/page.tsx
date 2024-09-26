@@ -254,7 +254,7 @@ export default function MyDocuments() {
                   <iframe
                     src={previewUrl}
                     className="w-full h-[70vh] border-0 rounded-lg"
-                    title="PDF Preview"
+                    title="Preview"
                   />
                 </motion.div>
               )}

@@ -25,7 +25,7 @@ async function patchhandler(req: NextRequest) {
     const newFile = {
       url: fileUrl,
       type: fileType,
-      category: fileCategory,
+      category: fileType == "img" ? "ID Image" : fileCategory,
     };
 
     user.files.push(newFile);

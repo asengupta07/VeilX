@@ -12,6 +12,8 @@ from dotenv import load_dotenv
 import re
 import pyzbar.pyzbar as pyzbar
 from paddleocr import PaddleOCR
+import hashlib
+import random
 
 
 load_dotenv()
@@ -573,6 +575,43 @@ def get_redacted_image(
 
     cv2.imwrite(output_path, redacted_image)
     logging.info(f"Redacted image saved as {output_path}")
+
+
+def sign_image(input_path, output_path, txn=None):
+    with Image.open(input_path) as img:
+        draw = ImageDraw.Draw(img)
+
+        if txn:
+            transaction_hash = f"Signed using hash: {txn}"
+        else:
+            transaction_hash = f"Signed using hash: {hashlib.sha256(str(random.random()).encode()).hexdigest()[:16]}"
+
+        font_size = 12
+        try:
+            font = ImageFont.truetype("arial.ttf", font_size)
+        except IOError:
+            font = ImageFont.load_default()
+
+        img_width, img_height = img.size
+
+        left, top, right, bottom = font.getbbox(transaction_hash)
+        text_width = right - left
+        text_height = bottom - top
+
+        margin = 10
+        x = margin
+        y = img_height - text_height - margin
+
+        bottom_area = img.crop((0, y - margin, img_width, img_height))
+        if bottom_area.convert("L").getextrema()[0] > 200:  # If the darkest pixel is light enough
+            draw.text((x, y), transaction_hash, font=font, fill=(0, 0, 0))
+        else:
+            y = margin
+            draw.text((x, y), transaction_hash, font=font, fill=(0, 0, 0))
+
+        img.save(output_path)
+
+    print(f"Added transaction hash to image. Saved as {output_path}")
 
 
 def get_redacted_image_cust(
