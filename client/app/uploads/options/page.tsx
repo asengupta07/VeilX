@@ -57,6 +57,7 @@ export default function ChooseRedactionPage() {
     sensitive: SensitiveInfo[];
     annotated_pdf: string;
     fileType: string;
+    ocr: any;
   } | null>(null);
   const [annotatedBlobUrl, setAnnotatedBlobUrl] = useState<string | null>(null);
   const [level, setLevel] = useState<string>("");
@@ -158,6 +159,7 @@ export default function ChooseRedactionPage() {
           sensitive: filteredSensitiveInfo,
           level,
           mode,
+          ocr: jsonData?.ocr,
         },
         {
           responseType: "blob",

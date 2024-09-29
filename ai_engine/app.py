@@ -425,6 +425,7 @@ def imgsensv2():
     doc.save(in_path)
 
     sensitive, ocr = get_sens_v2(in_path, level)
+    print(ocr)
 
     process_annot_v2(in_path, sensitive, annot_path)
 
