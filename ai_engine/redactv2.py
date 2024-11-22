@@ -10,11 +10,14 @@ import hashlib
 import os
 import fitz
 import random
+from groq import Groq
 
 load_dotenv()
 
 API_KEY = os.getenv("API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -79,6 +82,21 @@ def extract_json(response_text):
 
 
 def get_gemini_response(prompt):
+    try:
+        client = Groq(api_key=GROQ_API_KEY)
+        messages = [{"role": "user", "content": prompt}]
+        response = client.chat.completions.create(
+            messages=messages,
+            model="llama-3.1-70b-versatile"
+        )
+        print("USING GROQ")
+        return response.choices[0].message.content
+    except Exception as e:
+        logging.error(f"Error in GROQ API call: {str(e)}\nFallback to Gemini Pro")
+        return get_gemini_response2(prompt)
+
+
+def get_gemini_response2(prompt):
     try:
         model = genai.GenerativeModel("gemini-pro")
         safety_settings = [
@@ -231,7 +249,7 @@ def find_sensitive_data(text, level):
 
     if entities is None:
         logging.info("Falling back to Gemini Pro API")
-        print("prompt: ", prompt)
+        # print("prompt: ", prompt)
         gemini_response = get_gemini_response(prompt)
         print(gemini_response)
         if gemini_response:
@@ -308,14 +326,14 @@ def redact_text_in_pdf(pdf_doc, sensitive_data, level, mode):
                 )
                 page.add_redact_annot(inst, fill=fill_colors[mode])
 
-            words = data.split()
-            for word in words:
-                word_instances = page.search_for(word, quads=True)
-                for word_inst in word_instances:
-                    logging.info(
-                        f"Redacting word on page {page_num + 1}: {word} ({data_type})"
-                    )
-                    page.add_redact_annot(word_inst, fill=fill_colors[mode])
+            # words = data.split()
+            # for word in words:
+            #     word_instances = page.search_for(word, quads=True)
+            #     for word_inst in word_instances:
+            #         logging.info(
+            #             f"Redacting word on page {page_num + 1}: {word} ({data_type})"
+            #         )
+            #         page.add_redact_annot(word_inst, fill=fill_colors[mode])
 
         if level < 2:
             page.apply_redactions(images=0, graphics=0)
@@ -388,7 +406,7 @@ def get_custom_sensitive_data(text, user_prompt):
         "Ensure that you maintain this exact format at ALL COSTS.\n\n"
         f"Text to analyze:\n{text}"
     )
-    print("Prompt: ", prompt)
+    # print("Prompt: ", prompt)
     try:
         gemini_response = get_gemini_response(prompt)
         if gemini_response:
