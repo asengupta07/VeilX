@@ -153,7 +153,7 @@ export default function ChooseRedactionPage() {
       );
       let slug = jsonData?.fileType === "pdf" ? "redactv2" : "redactimgv4";
       const response = await axios.post(
-        `http://127.0.0.1:5000/${slug}`,
+        `http://127.0.0.1:8000/${slug}`,
         {
           doc: jsonData?.doc,
           sensitive: filteredSensitiveInfo,
@@ -193,7 +193,7 @@ export default function ChooseRedactionPage() {
   const renderAnnotatedPdf = async (filename: string) => {
     console.log("Annotated PDF Filename:", filename);
     try {
-      const response = await axios.get(`http://127.0.0.1:5000${filename}`, {
+      const response = await axios.get(`http://127.0.0.1:8000${filename}`, {
         responseType: "blob",
       });
       const contentType = response.headers["content-type"];

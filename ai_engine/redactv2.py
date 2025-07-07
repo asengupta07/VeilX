@@ -98,7 +98,7 @@ def get_gemini_response(prompt):
 
 def get_gemini_response2(prompt):
     try:
-        model = genai.GenerativeModel("gemini-pro")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         safety_settings = [
             {
                 "category": "HARM_CATEGORY_HARASSMENT",
@@ -387,6 +387,7 @@ def get_custom_sensitive_data(text, user_prompt):
         "This tool is culturally aware and capable of understanding diverse proper nouns, "
         "including names, addresses, and unique regional terms from various cultural contexts, such as Indian, East Asian, Middle Eastern, African, and Western names. "
         "The analysis should be precise, handling subtle differences in syntax and structure common in various languages and dialects. "
+        "Include all the text in your analysis, even URLs and email addresses."
         "Ensure flexibility in recognizing variations in spelling, transliteration, and formatting of culturally specific information.\n\n"
         f"User Prompt: {user_prompt}\n\n"
         "Your task is to identify and flag all items that match the user's criteria in a manner that respects regional naming conventions, abbreviations, and format differences. "

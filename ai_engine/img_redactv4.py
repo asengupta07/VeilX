@@ -60,7 +60,7 @@ def extract_json(response_text):
 
 def get_gemini_response(prompt):
     try:
-        model = genai.GenerativeModel("gemini-pro")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         safety_settings = [
             {
                 "category": "HARM_CATEGORY_HARASSMENT",

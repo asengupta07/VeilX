@@ -57,7 +57,7 @@ export default function DocumentPreviewPage() {
             let slug = data.fileType === "pdf" ? "customrv2" : "redactimgcustv2";
 
             const response = await axios.post(
-              `http://127.0.0.1:5000/${slug}`,
+              `http://127.0.0.1:8000/${slug}`,
               data,
               {
                 headers: {
@@ -169,7 +169,7 @@ export default function DocumentPreviewPage() {
         // Step 5: Make a POST request to the /addtxn API endpoint
         let slug = extension === "pdf" ? "addtxn" : "signimg";
         const apiResponse = await axios.post(
-          `http://127.0.0.1:5000/${slug}`,
+          `http://127.0.0.1:8000/${slug}`,
           formData,
           {
             responseType: "blob",

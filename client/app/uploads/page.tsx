@@ -70,13 +70,13 @@ export default function PurpleUploadPage() {
       if (redactionMode === "level") {
         formData.append("level", redactionDegree.toString());
         const slug = fileType === "pdf" ? "sensitive" : "imgsensv2";
-        response = await axios.post(`http://127.0.0.1:5000/${slug}`, formData, {
+        response = await axios.post(`http://127.0.0.1:8000/${slug}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       } else {
         formData.append("prompt", customPrompt);
         const slug = fileType === "pdf" ? "customsens" : "imgsenscustv2";
-        response = await axios.post(`http://127.0.0.1:5000/${slug}`, formData, {
+        response = await axios.post(`http://127.0.0.1:8000/${slug}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         localStorage.setItem("imagesRedacted", imagesRedacted ? "1" : "0");
@@ -87,7 +87,7 @@ export default function PurpleUploadPage() {
         let data = response.data;
         data.fileType = fileType;
         if (fileType === "pdf") {
-          let cat = await axios.post("http://127.0.0.1:5000/getcat", formData, {
+          let cat = await axios.post("http://127.0.0.1:8000/getcat", formData, {
             headers: { "Content-Type": "multipart/form-data" },
           });
           data.fileCategory = cat.data.category;
